@@ -1,0 +1,101 @@
+{
+  "JuanPerez": {
+    "nombre": "JuanPerez",
+    "creado_en": "2026-11-13T16:22:13.170965+00:00",
+    "actualizado_en": "2026-11-13T16:22:29.129711+00:00",
+    "preferencias": {
+      "categoria": "peliculas",
+      "referencias": [
+        "Interestelar",
+        "Entre navajas y secretos"
+      ],
+      "atributos": [
+        "giros_misterio",
+        "estetica_visual"
+      ],
+      "animos": [],
+      "gustos": [],
+      "compania": "solo",
+      "duracion": "medio",
+      "presupuesto": "indiferente",
+      "evitar": [
+        "sin_terror"
+      ],
+      "texto_libre": "Quiero ciencia ficcion o misterio elegante"
+    }
+  },
+  "Lector_Curioso": {
+    "nombre": "Lector_Curioso",
+    "creado_en": "2026-11-13T17:02:30.557751+00:00",
+    "actualizado_en": "2026-11-13T17:02:30.557751+00:00",
+    "preferencias": {
+      "categoria": "peliculas",
+      "referencias": [
+        "El viaje de Chihiro (Studio Ghibli)"
+      ],
+      "atributos": [
+        "tono_reflexivo"
+      ],
+      "animos": [],
+      "gustos": [],
+      "compania": "amigos",
+      "duracion": "indiferente",
+      "presupuesto": "indiferente",
+      "evitar": [
+        "sin_terror"
+      ],
+      "texto_libre": ""
+    }
+  },
+  "UsuarioPrueba": {
+    "nombre": "UsuarioPrueba",
+    "creado_en": "2026-11-14T20:01:36.449678+00:00",
+    "actualizado_en": "2026-11-14T20:01:36.449678+00:00",
+    "preferencias": {
+      "categoria": "todo",
+      "referencias": [
+        "Interestelar",
+        "Zelda: Breath of the Wild",
+        "Daft Punk"
+      ],
+      "atributos": [
+        "estetica_visual",
+        "tono_reflexivo"
+      ],
+      "animos": [],
+      "gustos": [],
+      "compania": "solo",
+      "duracion": "medio",
+      "presupuesto": "indiferente",
+      "evitar": [
+        "sin_terror"
+      ],
+      "texto_libre": "Algo inmersivo para la noche"
+    }
+  },
+  "felipe": {
+    "nombre": "felipe",
+    "creado_en": "2026-11-14T20:04:03.363733+00:00",
+    "actualizado_en": "2026-11-14T20:04:15.745972+00:00",
+    "preferencias": {
+      "categoria": "videojuegos",
+      "referencias": [
+        "Outer Wilds (Exploración espacial)"
+      ],
+      "atributos": [
+        "calma_sensorial",
+        "tecnica_artesanal"
+      ],
+      "animos": [],
+      "gustos": [],
+      "compania": "solo",
+      "duracion": "indiferente",
+      "presupuesto": "indiferente",
+      "evitar": [
+        "sin_terror",
+        "sin_depresion"
+      ],
+      "texto_libre": "Me interesan los juegos y planes de estrategia compartida donde haya que pensar."
+    }
+  }
+}

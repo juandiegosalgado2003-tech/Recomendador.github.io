@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="color-scheme" content="dark" />
+  <title>Criterio — Recomendador Inteligente</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap"
+    rel="stylesheet"
+  />
+  <link rel="stylesheet" href="/static/styles.css?v=20261114_1" />
+</head>
+<body>
+  <div class="canvas-ambient" aria-hidden="true"></div>
+
+  <!-- NAVEGACIÓN PRINCIPAL -->
+  <header class="navbar">
+    <div class="container navbar-inner">
+      <div class="brand">
+        <span class="brand-badge">C</span>
+        <span class="brand-name">Criterio</span>
+      </div>
+
+      <nav class="nav-shelf" aria-label="Navegación principal">
+        <button type="button" class="nav-link is-active" data-view="wizard">Recomendador</button>
+        <button type="button" class="nav-link" data-view="explorar">Explorar Catálogo</button>
+        <button type="button" class="nav-link" data-view="perfil">Mi Perfil</button>
+      </nav>
+
+      <div class="navbar-status">
+        <span class="status-dot" aria-hidden="true"></span>
+        <span id="catalog-count-badge">Catálogo sincronizado</span>
+      </div>
+    </div>
+  </header>
+
+  <main class="container page-viewport">
+    <!-- VISTA 1: RECOMENDADOR INTERACTIVO CON IA -->
+    <section id="view-wizard" class="view is-active" aria-labelledby="wizard-title">
+      <div class="hero-clean">
+        <h1 id="wizard-title">Descubre tu próxima experiencia</h1>
+        <p class="hero-lead">
+          Responde unas breves preguntas para que la IA entienda tus gustos y seleccione las opciones más afines a tu criterio.
+        </p>
+      </div>
+
+      <!-- CONTENEDOR DEL CUESTIONARIO -->
+      <div id="wizard-shell" class="form-card">
+        <div class="stepper-header">
+          <div class="stepper-dots" id="step-dots" role="tablist" aria-label="Etapas del formulario"></div>
+          <span class="step-indicator" id="step-label">Paso 1 de 6</span>
+        </div>
+        <div class="stepper-bar" aria-hidden="true">
+          <div class="stepper-fill" id="stepper-progress"></div>
+        </div>
+
+        <div id="wizard-stage" class="stage-body"></div>
+
+        <div class="stepper-actions">
+          <button type="button" class="btn is-ghost" id="btn-prev">Anterior</button>
+          <button type="button" class="btn is-primary" id="btn-next">Siguiente</button>
+        </div>
+      </div>
+
+      <!-- CONTENEDOR DE RESULTADOS DE RECOMENDACIÓN -->
+      <div id="wizard-results" class="results-wrapper" hidden>
+        <div class="results-header">
+          <div>
+            <h2>Recomendaciones personalizadas</h2>
+            <p class="results-summary" id="results-explanation"></p>
+          </div>
+          <div class="results-actions">
+            <button type="button" class="btn is-ghost" id="btn-edit-quiz">Modificar gustos</button>
+            <button type="button" class="btn is-primary" id="btn-restart-quiz">Nuevo test</button>
+          </div>
+        </div>
+
+        <div class="filter-pills-row" id="results-filter-row"></div>
+
+        <div id="results-grid" class="cards-grid"></div>
+      </div>
+    </section>
+
+    <!-- VISTA 2: EXPLORAR CATÁLOGO Y COLECCIONES TEMÁTICAS -->
+    <section id="view-explorar" class="view" hidden aria-labelledby="explorar-title">
+      <div class="hero-clean compact">
+        <h1 id="explorar-title">Explorar Catálogo</h1>
+      </div>
+
+      <div class="search-bar-row">
+        <div class="search-input-wrap">
+          <input
+            id="search-input"
+            type="search"
+            placeholder="Buscar por título, temática, autor o palabras clave..."
+            autocomplete="off"
+          />
+        </div>
+        <button type="button" class="btn is-primary" id="btn-search-exec">Buscar</button>
+      </div>
+
+      <!-- GRUPOS TEMÁTICOS DERIVADOS DEL CLUSTERING -->
+      <div class="thematic-clusters-section">
+        <span class="section-label">Colecciones Temáticas</span>
+        <div class="cluster-chips-row" id="explore-cluster-chips"></div>
+      </div>
+
+      <!-- FILTRO DE CATEGORÍAS -->
+      <div class="categories-filter-strip" id="explore-category-chips"></div>
+
+      <div id="explore-grid" class="cards-grid"></div>
+    </section>
+
+    <!-- VISTA 3: MI PERFIL Y VALORACIONES -->
+    <section id="view-perfil" class="view" hidden aria-labelledby="perfil-title">
+      <div class="hero-clean compact">
+        <h1 id="perfil-title">Mi Perfil</h1>
+      </div>
+
+      <div class="profile-layout">
+        <div class="form-card profile-sidebar">
+          <h3>Preferencias activas</h3>
+          <div class="field-item">
+            <label for="profile-user-input">Nombre de usuario</label>
+            <input id="profile-user-input" type="text" class="input-text" value="Lector_Curioso" />
+          </div>
+          <div class="field-item">
+            <label for="profile-method-select">Algoritmo de recomendación</label>
+            <select id="profile-method-select" class="dropdown-select">
+              <option value="combinado" selected>Híbrido (Contenido + Filtrado Colaborativo)</option>
+              <option value="contenido">Similitud de Contenido y Atributos</option>
+              <option value="colaborativo">Comportamiento Colaborativo (SVD)</option>
+              <option value="clustering">Agrupamiento Temático (Clusters)</option>
+              <option value="popularidad">Populares y Mejor Valorados</option>
+            </select>
+          </div>
+          <button type="button" class="btn is-primary is-full" id="btn-refresh-profile">
+            Actualizar recomendaciones
+          </button>
+        </div>
+
+        <div class="profile-content">
+          <div class="section-block">
+            <h3>Sugerencias para tu perfil</h3>
+            <div id="profile-recs-grid" class="cards-grid"></div>
+          </div>
+
+          <div class="section-block">
+            <h3>Obras que has valorado (<span id="profile-ratings-count">0</span>)</h3>
+            <div id="profile-history-grid" class="history-list"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- MODAL DE DETALLE -->
+  <dialog id="item-modal" class="modal-dialog" aria-labelledby="modal-item-title">
+    <div class="modal-content">
+      <div class="modal-header">
+        <div>
+          <span class="badge-pill" id="modal-category"></span>
+          <h2 id="modal-item-title"></h2>
+        </div>
+        <button type="button" class="btn-close" id="btn-close-modal" aria-label="Cerrar modal">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+            <path d="M18 6L6 18M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+
+      <p class="modal-description" id="modal-desc"></p>
+      <div class="tags-row" id="modal-tags"></div>
+      <div class="meta-row" id="modal-meta"></div>
+
+      <div class="rating-strip-section">
+        <span>Tu calificación:</span>
+        <div class="numeric-stars" id="modal-rating-buttons"></div>
+      </div>
+
+      <div class="similar-items-section">
+        <h4>Obras similares</h4>
+        <div class="similars-grid" id="modal-similars-grid"></div>
+      </div>
+    </div>
+  </dialog>
+
+  <div id="toast-dock" class="toast-dock" role="status" aria-live="polite"></div>
+
+  <script type="module" src="/static/app.js?v=20261114_1"></script>
+</body>
+</html>

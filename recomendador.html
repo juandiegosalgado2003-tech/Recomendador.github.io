@@ -1,0 +1,4880 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="color-scheme" content="dark" />
+  <title>Criterio — Recomendador Inteligente</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap"
+    rel="stylesheet"
+  />
+  <style>
+:root {
+  color-scheme: dark;
+  --bg-main: #0b0d13;
+  --bg-surface: #131722;
+  --bg-surface-elevated: #1a1e2c;
+  --bg-surface-hover: #222738;
+  --bg-glass: rgba(19, 23, 34, 0.88);
+
+  --text-main: #f3f5f9;
+  --text-secondary: #9da7bc;
+  --text-muted: #657086;
+
+  --accent-gold: #d99b3b;
+  --accent-gold-hover: #e8ab4d;
+  --accent-gold-soft: rgba(217, 155, 59, 0.12);
+  --accent-gold-border: rgba(217, 155, 59, 0.35);
+
+  --accent-sage: #2ea881;
+  --accent-sage-soft: rgba(46, 168, 129, 0.12);
+
+  --border-subtle: rgba(255, 255, 255, 0.08);
+  --border-medium: rgba(255, 255, 255, 0.15);
+
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 18px;
+  --radius-pill: 9999px;
+
+  --font-serif: "Fraunces", Georgia, serif;
+  --font-sans: "Plus Jakarta Sans", system-ui, -apple-system, sans-serif;
+
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.3);
+  --shadow-card: 0 10px 28px -6px rgba(0, 0, 0, 0.5), 0 2px 6px -1px rgba(0, 0, 0, 0.3);
+  --shadow-elevated: 0 16px 36px -8px rgba(0, 0, 0, 0.65), 0 4px 12px rgba(0, 0, 0, 0.4);
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  background-color: var(--bg-main);
+  color: var(--text-main);
+  font-family: var(--font-sans);
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+}
+
+.canvas-ambient {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background:
+    radial-gradient(60rem 35rem at 20% -10%, rgba(217, 155, 59, 0.08), transparent 60%),
+    radial-gradient(50rem 30rem at 85% 10%, rgba(46, 168, 129, 0.06), transparent 55%);
+}
+
+.container {
+  position: relative;
+  z-index: 1;
+  width: min(1140px, 100% - 3rem);
+  margin-inline: auto;
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent-gold);
+  outline-offset: 2px;
+}
+
+/* ==========================================================================
+   NAVBAR
+   ========================================================================== */
+.navbar {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  background: var(--bg-glass);
+  backdrop-filter: blur(16px);
+  border-bottom: 1px solid var(--border-subtle);
+  padding-block: 0.9rem;
+}
+
+.navbar-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.5rem;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  text-decoration: none;
+  color: var(--text-main);
+}
+
+.brand-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  background: var(--accent-gold);
+  color: #0b0d13;
+  font-family: var(--font-serif);
+  font-weight: 700;
+  font-size: 1.05rem;
+  border-radius: var(--radius-sm);
+}
+
+.brand-name {
+  font-family: var(--font-serif);
+  font-size: 1.35rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+.nav-shelf {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  background: rgba(0, 0, 0, 0.35);
+  padding: 0.3rem;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--border-subtle);
+}
+
+.nav-link {
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  font-family: var(--font-sans);
+  font-size: 0.88rem;
+  font-weight: 500;
+  padding: 0.45rem 1.15rem;
+  border-radius: var(--radius-pill);
+  cursor: pointer;
+  transition: all 180ms ease;
+  white-space: nowrap;
+}
+
+.nav-link:hover {
+  color: var(--text-main);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.nav-link.is-active {
+  color: #0b0d13;
+  background: var(--text-main);
+  font-weight: 600;
+}
+
+.navbar-status {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+
+.status-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--accent-sage);
+}
+
+/* ==========================================================================
+   HERO CLEAN (SIN PARRAFOS REPETITIVOS NI TEXTOS PEQUEÑOS EN ORÍLLAS)
+   ========================================================================== */
+.page-viewport {
+  padding-block: 2.75rem 4.5rem;
+}
+
+.view[hidden] {
+  display: none !important;
+}
+
+.hero-clean {
+  text-align: center;
+  max-width: 680px;
+  margin: 0 auto 2.5rem;
+}
+
+.hero-clean.compact {
+  text-align: left;
+  max-width: none;
+  margin: 0 0 1.75rem;
+}
+
+.hero-clean h1 {
+  font-family: var(--font-serif);
+  font-size: clamp(2rem, 3.5vw, 2.75rem);
+  font-weight: 600;
+  letter-spacing: -0.03em;
+  line-height: 1.18;
+  margin: 0 0 0.85rem;
+  color: var(--text-main);
+}
+
+.hero-lead {
+  font-size: 1.05rem;
+  color: var(--text-secondary);
+  line-height: 1.55;
+  margin: 0;
+}
+
+/* ==========================================================================
+   FORM CONTAINER CARD
+   ========================================================================== */
+.form-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+  padding: 2.25rem 2.5rem;
+  position: relative;
+}
+
+.stepper-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+
+.stepper-dots {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.step-dot {
+  width: 2rem;
+  height: 2rem;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-muted);
+  font-size: 0.82rem;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 180ms ease;
+}
+
+.step-dot:hover:not(:disabled) {
+  border-color: var(--border-medium);
+  color: var(--text-main);
+}
+
+.step-dot.is-active {
+  background: var(--accent-gold);
+  border-color: var(--accent-gold);
+  color: #0b0d13;
+}
+
+.step-dot.is-completed {
+  background: var(--accent-sage-soft);
+  border-color: var(--accent-sage);
+  color: var(--accent-sage);
+}
+
+.step-indicator {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.stepper-bar {
+  height: 3px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: var(--radius-pill);
+  overflow: hidden;
+  margin-bottom: 2.25rem;
+}
+
+.stepper-fill {
+  height: 100%;
+  width: 16.66%;
+  background: var(--accent-gold);
+  transition: width 240ms ease;
+}
+
+/* ==========================================================================
+   STAGE & QUESTIONS
+   ========================================================================== */
+.stage-body {
+  min-height: 340px;
+}
+
+.stage-title {
+  font-family: var(--font-serif);
+  font-size: 1.45rem;
+  font-weight: 600;
+  margin: 0 0 1.5rem;
+  color: var(--text-main);
+}
+
+/* Step 1: Categories */
+.category-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+  gap: 0.9rem;
+}
+
+.category-card {
+  background: var(--bg-surface-elevated);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: 1.15rem;
+  cursor: pointer;
+  transition: all 160ms ease;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  text-align: left;
+}
+
+.category-card:hover {
+  background: var(--bg-surface-hover);
+  border-color: var(--border-medium);
+  transform: translateY(-2px);
+}
+
+.category-card.is-selected {
+  background: var(--bg-surface-hover);
+  border-color: var(--accent-gold);
+  box-shadow: 0 0 0 1px var(--accent-gold);
+}
+
+.category-card-icon {
+  width: 2.4rem;
+  height: 2.4rem;
+  border-radius: var(--radius-sm);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--accent-gold);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.category-card-icon svg {
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
+.category-card-info strong {
+  display: block;
+  font-size: 0.94rem;
+  color: var(--text-main);
+}
+
+.category-card-info span {
+  display: block;
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  margin-top: 0.15rem;
+}
+
+/* Step 2: Cultural References */
+.references-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 0.85rem;
+  margin-bottom: 1.5rem;
+}
+
+.reference-card {
+  background: var(--bg-surface-elevated);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: 0.95rem 1.15rem;
+  cursor: pointer;
+  transition: all 160ms ease;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.reference-card:hover {
+  background: var(--bg-surface-hover);
+  border-color: var(--border-medium);
+}
+
+.reference-card.is-selected {
+  background: var(--accent-gold-soft);
+  border-color: var(--accent-gold);
+}
+
+.reference-card strong {
+  font-size: 0.92rem;
+  font-weight: 600;
+  color: var(--text-main);
+}
+
+.custom-input-box {
+  background: rgba(0, 0, 0, 0.25);
+  border: 1px dashed var(--border-medium);
+  border-radius: var(--radius-md);
+  padding: 1.15rem 1.25rem;
+}
+
+.custom-input-box label {
+  display: block;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  margin-bottom: 0.5rem;
+}
+
+/* Step 3: Attributes */
+.attributes-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 0.85rem;
+}
+
+.attribute-card {
+  background: var(--bg-surface-elevated);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: 1.15rem;
+  cursor: pointer;
+  transition: all 160ms ease;
+}
+
+.attribute-card:hover {
+  background: var(--bg-surface-hover);
+  border-color: var(--border-medium);
+}
+
+.attribute-card.is-selected {
+  background: var(--accent-sage-soft);
+  border-color: var(--accent-sage);
+}
+
+.attribute-card h4 {
+  margin: 0 0 0.35rem;
+  font-size: 0.94rem;
+  color: var(--text-main);
+}
+
+.attribute-card p {
+  margin: 0;
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+  line-height: 1.45;
+}
+
+/* Step 4: Format & Company */
+.format-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 1.75rem;
+}
+
+.format-group label {
+  display: block;
+  font-size: 0.84rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin-bottom: 0.65rem;
+}
+
+.chips-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.choice-chip {
+  background: var(--bg-surface-elevated);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-secondary);
+  padding: 0.55rem 1.1rem;
+  border-radius: var(--radius-pill);
+  font-family: var(--font-sans);
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 160ms ease;
+}
+
+.choice-chip:hover {
+  color: var(--text-main);
+  border-color: var(--border-medium);
+}
+
+.choice-chip.is-selected {
+  background: var(--accent-gold);
+  border-color: var(--accent-gold);
+  color: #0b0d13;
+  font-weight: 600;
+}
+
+/* Step 5: Exclusions */
+.exclusions-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 0.85rem;
+}
+
+.exclusion-card {
+  background: var(--bg-surface-elevated);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: 1.05rem 1.2rem;
+  cursor: pointer;
+  transition: all 160ms ease;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.exclusion-card:hover {
+  border-color: var(--border-medium);
+}
+
+.exclusion-card.is-selected {
+  background: rgba(200, 90, 62, 0.12);
+  border-color: #c85a3e;
+}
+
+.exclusion-card span {
+  font-size: 0.9rem;
+  color: var(--text-main);
+}
+
+.exclusion-indicator {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.exclusion-card.is-selected .exclusion-indicator {
+  color: #c85a3e;
+}
+
+/* Step 6: Free text and Profile name */
+.step-final-layout {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr;
+  gap: 2rem;
+}
+
+.textarea-input {
+  width: 100%;
+  min-height: 120px;
+  background: var(--bg-surface-elevated);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  color: var(--text-main);
+  font-family: var(--font-sans);
+  font-size: 0.92rem;
+  padding: 0.85rem 1rem;
+  resize: vertical;
+  line-height: 1.5;
+  transition: border-color 160ms ease;
+}
+
+.textarea-input:focus {
+  outline: none;
+  border-color: var(--accent-gold);
+}
+
+.prompt-suggestions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  margin-top: 0.75rem;
+}
+
+.prompt-btn {
+  background: transparent;
+  border: 1px solid var(--border-subtle);
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  text-align: left;
+  padding: 0.45rem 0.75rem;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all 140ms ease;
+}
+
+.prompt-btn:hover {
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--text-main);
+  border-color: var(--border-medium);
+}
+
+.profile-box {
+  background: var(--bg-surface-elevated);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.15rem;
+}
+
+.input-text {
+  width: 100%;
+  background: var(--bg-main);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  color: var(--text-main);
+  font-family: var(--font-sans);
+  font-size: 0.92rem;
+  padding: 0.65rem 0.85rem;
+}
+
+.input-text:focus {
+  outline: none;
+  border-color: var(--accent-gold);
+}
+
+/* Stepper Actions */
+.stepper-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 2.25rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--border-subtle);
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.65rem 1.45rem;
+  border-radius: var(--radius-pill);
+  font-family: var(--font-sans);
+  font-size: 0.88rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 160ms ease;
+  border: none;
+  text-decoration: none;
+}
+
+.btn.is-primary {
+  background: var(--accent-gold);
+  color: #0b0d13;
+}
+
+.btn.is-primary:hover {
+  background: var(--accent-gold-hover);
+  transform: translateY(-1px);
+}
+
+.btn.is-ghost {
+  background: transparent;
+  color: var(--text-secondary);
+  border: 1px solid var(--border-subtle);
+}
+
+.btn.is-ghost:hover {
+  color: var(--text-main);
+  border-color: var(--border-medium);
+}
+
+.btn.is-full {
+  width: 100%;
+}
+
+.btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  transform: none !important;
+}
+
+/* ==========================================================================
+   RESULTS WRAPPER & CARDS
+   ========================================================================== */
+.results-wrapper {
+  margin-top: 3.5rem;
+}
+
+.results-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.results-header h2 {
+  font-family: var(--font-serif);
+  font-size: 1.85rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  margin: 0 0 0.35rem;
+  color: var(--text-main);
+}
+
+.results-summary {
+  font-size: 0.95rem;
+  color: var(--text-secondary);
+  margin: 0;
+  max-width: 620px;
+}
+
+.results-actions {
+  display: flex;
+  gap: 0.6rem;
+  flex-shrink: 0;
+}
+
+.filter-pills-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  margin-bottom: 1.75rem;
+}
+
+.pill-tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.3rem 0.75rem;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-pill);
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+}
+
+.cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(330px, 1fr));
+  gap: 1.35rem;
+}
+
+.item-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  box-shadow: var(--shadow-card);
+  transition: all 180ms ease;
+  position: relative;
+}
+
+.item-card:hover {
+  border-color: var(--border-medium);
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-elevated);
+}
+
+.item-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 0.85rem;
+}
+
+.badge-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.25rem 0.65rem;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-pill);
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-secondary);
+}
+
+.affinity-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.25rem 0.65rem;
+  background: var(--accent-sage-soft);
+  color: var(--accent-sage);
+  border: 1px solid rgba(46, 168, 129, 0.25);
+  border-radius: var(--radius-pill);
+  font-size: 0.76rem;
+  font-weight: 700;
+}
+
+.item-card-title {
+  font-family: var(--font-serif);
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin: 0 0 0.5rem;
+  color: var(--text-main);
+  line-height: 1.3;
+}
+
+.item-card-desc {
+  font-size: 0.88rem;
+  color: var(--text-secondary);
+  line-height: 1.5;
+  margin: 0 0 1rem;
+}
+
+.match-reason {
+  font-size: 0.8rem;
+  color: var(--accent-gold);
+  margin: 0 0 1.25rem;
+  line-height: 1.45;
+}
+
+.item-card-bottom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border-subtle);
+}
+
+.rating-pills-row {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.rate-btn {
+  width: 1.85rem;
+  height: 1.85rem;
+  border-radius: var(--radius-sm);
+  background: var(--bg-surface-elevated);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-secondary);
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 140ms ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+
+.rate-btn:hover {
+  background: var(--accent-gold-soft);
+  color: var(--accent-gold);
+  border-color: var(--accent-gold-border);
+}
+
+.rate-btn.is-active {
+  background: var(--accent-gold);
+  color: #0b0d13;
+  border-color: var(--accent-gold);
+}
+
+/* ==========================================================================
+   EXPLORER & CLUSTERS TEMÁTICOS (ORGANIZACIÓN POR CLUSTERS)
+   ========================================================================== */
+.search-bar-row {
+  display: flex;
+  gap: 0.75rem;
+  margin-bottom: 1.75rem;
+}
+
+.search-input-wrap {
+  flex: 1;
+}
+
+.search-input-wrap input {
+  width: 100%;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-pill);
+  padding: 0.8rem 1.35rem;
+  color: var(--text-main);
+  font-family: var(--font-sans);
+  font-size: 0.94rem;
+}
+
+.search-input-wrap input:focus {
+  outline: none;
+  border-color: var(--accent-gold);
+}
+
+.thematic-clusters-section {
+  margin-bottom: 1.5rem;
+}
+
+.section-label {
+  display: block;
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+  margin-bottom: 0.75rem;
+}
+
+.cluster-chips-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.cluster-chip {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-secondary);
+  padding: 0.45rem 0.95rem;
+  border-radius: var(--radius-pill);
+  font-size: 0.82rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 160ms ease;
+}
+
+.cluster-chip:hover {
+  color: var(--text-main);
+  border-color: var(--border-medium);
+}
+
+.cluster-chip.is-active {
+  background: var(--accent-gold-soft);
+  border-color: var(--accent-gold);
+  color: var(--accent-gold);
+  font-weight: 600;
+}
+
+.categories-filter-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  margin-bottom: 1.75rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border-subtle);
+}
+
+.category-chip {
+  background: transparent;
+  border: 1px solid var(--border-subtle);
+  color: var(--text-muted);
+  padding: 0.35rem 0.85rem;
+  border-radius: var(--radius-pill);
+  font-size: 0.8rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 140ms ease;
+}
+
+.category-chip:hover {
+  color: var(--text-main);
+  border-color: var(--border-medium);
+}
+
+.category-chip.is-active {
+  background: var(--text-main);
+  color: #0b0d13;
+  font-weight: 600;
+}
+
+/* ==========================================================================
+   PROFILE
+   ========================================================================== */
+.profile-layout {
+  display: grid;
+  grid-template-columns: 320px 1fr;
+  gap: 2rem;
+  align-items: start;
+}
+
+.profile-sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.profile-sidebar h3 {
+  font-family: var(--font-serif);
+  font-size: 1.25rem;
+  margin: 0;
+  color: var(--text-main);
+}
+
+.field-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.field-item label {
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+}
+
+.dropdown-select {
+  background: var(--bg-main);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  color: var(--text-main);
+  font-family: var(--font-sans);
+  font-size: 0.86rem;
+  padding: 0.55rem 0.75rem;
+}
+
+.dropdown-select:focus {
+  outline: none;
+  border-color: var(--accent-gold);
+}
+
+.profile-content {
+  display: flex;
+  flex-direction: column;
+  gap: 2.5rem;
+}
+
+.section-block h3 {
+  font-family: var(--font-serif);
+  font-size: 1.35rem;
+  margin: 0 0 1rem;
+  color: var(--text-main);
+}
+
+.history-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 0.85rem;
+}
+
+.history-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: 1rem 1.15rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.history-card strong {
+  display: block;
+  font-size: 0.9rem;
+  color: var(--text-main);
+}
+
+.history-card span {
+  font-size: 0.76rem;
+  color: var(--text-muted);
+}
+
+.history-badge {
+  padding: 0.2rem 0.55rem;
+  background: var(--accent-gold-soft);
+  color: var(--accent-gold);
+  border-radius: var(--radius-sm);
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+/* ==========================================================================
+   MODAL
+   ========================================================================== */
+.modal-dialog {
+  background: transparent;
+  border: none;
+  padding: 0;
+  max-width: 620px;
+  width: 90%;
+  color: var(--text-main);
+}
+
+.modal-dialog::backdrop {
+  background: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(8px);
+}
+
+.modal-content {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  padding: 2.25rem;
+  box-shadow: var(--shadow-elevated);
+}
+
+.modal-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+}
+
+.modal-header h2 {
+  font-family: var(--font-serif);
+  font-size: 1.55rem;
+  margin: 0.35rem 0 0;
+  color: var(--text-main);
+}
+
+.btn-close {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 0.25rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-close svg {
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
+.btn-close:hover {
+  color: var(--text-main);
+}
+
+.modal-description {
+  font-size: 0.94rem;
+  color: var(--text-secondary);
+  line-height: 1.6;
+  margin: 0 0 1.25rem;
+}
+
+.tags-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-bottom: 1.25rem;
+}
+
+.meta-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 0.65rem;
+  background: var(--bg-surface-elevated);
+  border-radius: var(--radius-md);
+  padding: 0.85rem 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.meta-unit span {
+  display: block;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.meta-unit strong {
+  display: block;
+  font-size: 0.88rem;
+  color: var(--text-main);
+  margin-top: 0.15rem;
+}
+
+.rating-strip-section {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding-block: 1rem;
+  border-block: 1px solid var(--border-subtle);
+  margin-bottom: 1.5rem;
+}
+
+.rating-strip-section span {
+  font-size: 0.86rem;
+  color: var(--text-secondary);
+}
+
+.numeric-stars {
+  display: flex;
+  gap: 0.35rem;
+}
+
+.similar-items-section h4 {
+  font-size: 0.92rem;
+  margin: 0 0 0.85rem;
+  color: var(--text-main);
+}
+
+.similars-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 0.65rem;
+}
+
+.similar-card {
+  background: var(--bg-surface-elevated);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  padding: 0.65rem 0.85rem;
+  cursor: pointer;
+  transition: all 140ms ease;
+}
+
+.similar-card:hover {
+  border-color: var(--accent-gold);
+}
+
+.similar-card strong {
+  display: block;
+  font-size: 0.84rem;
+  color: var(--text-main);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.similar-card span {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+}
+
+/* ==========================================================================
+   TOASTS
+   ========================================================================== */
+.toast-dock {
+  position: fixed;
+  bottom: 1.5rem;
+  right: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  z-index: 99;
+}
+
+.toast {
+  background: var(--bg-surface-elevated);
+  border: 1px solid var(--border-medium);
+  border-left: 3px solid var(--accent-gold);
+  border-radius: var(--radius-sm);
+  padding: 0.75rem 1.15rem;
+  font-size: 0.86rem;
+  color: var(--text-main);
+  box-shadow: var(--shadow-elevated);
+}
+
+@media (max-width: 860px) {
+  .profile-layout {
+    grid-template-columns: 1fr;
+  }
+  .step-final-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .navbar-inner {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .nav-shelf {
+    overflow-x: auto;
+  }
+  .results-header {
+    flex-direction: column;
+  }
+}
+
+  </style>
+</head>
+<body>
+
+  <div class="canvas-ambient" aria-hidden="true"></div>
+
+  <!-- NAVEGACIÓN PRINCIPAL -->
+  <header class="navbar">
+    <div class="container navbar-inner">
+      <div class="brand">
+        <span class="brand-badge">C</span>
+        <span class="brand-name">Criterio</span>
+      </div>
+
+      <nav class="nav-shelf" aria-label="Navegación principal">
+        <button type="button" class="nav-link is-active" data-view="wizard">Recomendador</button>
+        <button type="button" class="nav-link" data-view="explorar">Explorar Catálogo</button>
+        <button type="button" class="nav-link" data-view="perfil">Mi Perfil</button>
+      </nav>
+
+      <div class="navbar-status">
+        <span class="status-dot" aria-hidden="true"></span>
+        <span id="catalog-count-badge">Catálogo sincronizado</span>
+      </div>
+    </div>
+  </header>
+
+  <main class="container page-viewport">
+    <!-- VISTA 1: RECOMENDADOR INTERACTIVO CON IA -->
+    <section id="view-wizard" class="view is-active" aria-labelledby="wizard-title">
+      <div class="hero-clean">
+        <h1 id="wizard-title">Descubre tu próxima experiencia</h1>
+        <p class="hero-lead">
+          Responde unas breves preguntas para que la IA entienda tus gustos y seleccione las opciones más afines a tu criterio.
+        </p>
+      </div>
+
+      <!-- CONTENEDOR DEL CUESTIONARIO -->
+      <div id="wizard-shell" class="form-card">
+        <div class="stepper-header">
+          <div class="stepper-dots" id="step-dots" role="tablist" aria-label="Etapas del formulario"></div>
+          <span class="step-indicator" id="step-label">Paso 1 de 6</span>
+        </div>
+        <div class="stepper-bar" aria-hidden="true">
+          <div class="stepper-fill" id="stepper-progress"></div>
+        </div>
+
+        <div id="wizard-stage" class="stage-body"></div>
+
+        <div class="stepper-actions">
+          <button type="button" class="btn is-ghost" id="btn-prev">Anterior</button>
+          <button type="button" class="btn is-primary" id="btn-next">Siguiente</button>
+        </div>
+      </div>
+
+      <!-- CONTENEDOR DE RESULTADOS DE RECOMENDACIÓN -->
+      <div id="wizard-results" class="results-wrapper" hidden>
+        <div class="results-header">
+          <div>
+            <h2>Recomendaciones personalizadas</h2>
+            <p class="results-summary" id="results-explanation"></p>
+          </div>
+          <div class="results-actions">
+            <button type="button" class="btn is-ghost" id="btn-edit-quiz">Modificar gustos</button>
+            <button type="button" class="btn is-primary" id="btn-restart-quiz">Nuevo test</button>
+          </div>
+        </div>
+
+        <div class="filter-pills-row" id="results-filter-row"></div>
+
+        <div id="results-grid" class="cards-grid"></div>
+      </div>
+    </section>
+
+    <!-- VISTA 2: EXPLORAR CATÁLOGO Y COLECCIONES TEMÁTICAS -->
+    <section id="view-explorar" class="view" hidden aria-labelledby="explorar-title">
+      <div class="hero-clean compact">
+        <h1 id="explorar-title">Explorar Catálogo</h1>
+      </div>
+
+      <div class="search-bar-row">
+        <div class="search-input-wrap">
+          <input
+            id="search-input"
+            type="search"
+            placeholder="Buscar por título, temática, autor o palabras clave..."
+            autocomplete="off"
+          />
+        </div>
+        <button type="button" class="btn is-primary" id="btn-search-exec">Buscar</button>
+      </div>
+
+      <!-- GRUPOS TEMÁTICOS DERIVADOS DEL CLUSTERING -->
+      <div class="thematic-clusters-section">
+        <span class="section-label">Colecciones Temáticas</span>
+        <div class="cluster-chips-row" id="explore-cluster-chips"></div>
+      </div>
+
+      <!-- FILTRO DE CATEGORÍAS -->
+      <div class="categories-filter-strip" id="explore-category-chips"></div>
+
+      <div id="explore-grid" class="cards-grid"></div>
+    </section>
+
+    <!-- VISTA 3: MI PERFIL Y VALORACIONES -->
+    <section id="view-perfil" class="view" hidden aria-labelledby="perfil-title">
+      <div class="hero-clean compact">
+        <h1 id="perfil-title">Mi Perfil</h1>
+      </div>
+
+      <div class="profile-layout">
+        <div class="form-card profile-sidebar">
+          <h3>Preferencias activas</h3>
+          <div class="field-item">
+            <label for="profile-user-input">Nombre de usuario</label>
+            <input id="profile-user-input" type="text" class="input-text" value="Lector_Curioso" />
+          </div>
+          <div class="field-item">
+            <label for="profile-method-select">Algoritmo de recomendación</label>
+            <select id="profile-method-select" class="dropdown-select">
+              <option value="combinado" selected>Híbrido (Contenido + Filtrado Colaborativo)</option>
+              <option value="contenido">Similitud de Contenido y Atributos</option>
+              <option value="colaborativo">Comportamiento Colaborativo (SVD)</option>
+              <option value="clustering">Agrupamiento Temático (Clusters)</option>
+              <option value="popularidad">Populares y Mejor Valorados</option>
+            </select>
+          </div>
+          <button type="button" class="btn is-primary is-full" id="btn-refresh-profile">
+            Actualizar recomendaciones
+          </button>
+        </div>
+
+        <div class="profile-content">
+          <div class="section-block">
+            <h3>Sugerencias para tu perfil</h3>
+            <div id="profile-recs-grid" class="cards-grid"></div>
+          </div>
+
+          <div class="section-block">
+            <h3>Obras que has valorado (<span id="profile-ratings-count">0</span>)</h3>
+            <div id="profile-history-grid" class="history-list"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- MODAL DE DETALLE -->
+  <dialog id="item-modal" class="modal-dialog" aria-labelledby="modal-item-title">
+    <div class="modal-content">
+      <div class="modal-header">
+        <div>
+          <span class="badge-pill" id="modal-category"></span>
+          <h2 id="modal-item-title"></h2>
+        </div>
+        <button type="button" class="btn-close" id="btn-close-modal" aria-label="Cerrar modal">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+            <path d="M18 6L6 18M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+
+      <p class="modal-description" id="modal-desc"></p>
+      <div class="tags-row" id="modal-tags"></div>
+      <div class="meta-row" id="modal-meta"></div>
+
+      <div class="rating-strip-section">
+        <span>Tu calificación:</span>
+        <div class="numeric-stars" id="modal-rating-buttons"></div>
+      </div>
+
+      <div class="similar-items-section">
+        <h4>Obras similares</h4>
+        <div class="similars-grid" id="modal-similars-grid"></div>
+      </div>
+    </div>
+  </dialog>
+
+  <div id="toast-dock" class="toast-dock" role="status" aria-live="polite"></div>
+
+  
+
+  <script>
+
+// ============================================================================
+// DATOS INCORPORADOS (CATÁLOGO Y PREGUNTAS)
+// ============================================================================
+const ITEMS_CATALOGO = [
+  {
+    "id": 1,
+    "nombre": "Interestelar",
+    "categoria": "peliculas",
+    "subcategoria": "Ciencia ficción",
+    "descripcion": "Un viaje espacial épico sobre el tiempo, la física y el vínculo entre un padre y su hija.",
+    "etiquetas": [
+      "ciencia ficcion",
+      "espacio",
+      "emotivo",
+      "banda sonora",
+      "futuro"
+    ],
+    "texto": "Interestelar Ciencia ficción Un viaje espacial épico sobre el tiempo, la física y el vínculo entre un padre y su hija. ciencia ficcion espacio emotivo banda sonora futuro universo astronomia agujero negro familia drama reflexivo tecnologia nolan emotivo economico largo solo pareja amigos",
+    "tono": "emotivo",
+    "presupuesto": "economico",
+    "duracion": "largo",
+    "compania": "solo, pareja, amigos",
+    "icono": "film"
+  },
+  {
+    "id": 2,
+    "nombre": "Spider-Man: Un nuevo universo",
+    "categoria": "peliculas",
+    "subcategoria": "Animación / Acción",
+    "descripcion": "Animación vibrante con ritmo vertiginoso, humor fresco y corazón sobre encontrar tu identidad.",
+    "etiquetas": [
+      "animacion",
+      "accion",
+      "superheroes",
+      "dinamico",
+      "colorido"
+    ],
+    "texto": "Spider-Man: Un nuevo universo Animación / Acción Animación vibrante con ritmo vertiginoso, humor fresco y corazón sobre encontrar tu identidad. animacion accion superheroes dinamico colorido aventura musica hip hop comedia familia amigos ritmo rapido energia divertido economico medio solo amigos familia",
+    "tono": "divertido",
+    "presupuesto": "economico",
+    "duracion": "medio",
+    "compania": "solo, amigos, familia",
+    "icono": "film"
+  },
+  {
+    "id": 3,
+    "nombre": "Entre navajas y secretos (Knives Out)",
+    "categoria": "peliculas",
+    "subcategoria": "Misterio / Comedia",
+    "descripcion": "Un detective excéntrico investiga un asesinato en una mansión llena de sospechosos brillantes.",
+    "etiquetas": [
+      "misterio",
+      "giros",
+      "comedia inteligente",
+      "detective",
+      "suspenso"
+    ],
+    "texto": "Entre navajas y secretos (Knives Out) Misterio / Comedia Un detective excéntrico investiga un asesinato en una mansión llena de sospechosos brillantes. misterio giros comedia inteligente detective suspenso enigma investigacion familia herencia ingenio entretenida ritmo agil curioso economico medio pareja amigos familia",
+    "tono": "curioso",
+    "presupuesto": "economico",
+    "duracion": "medio",
+    "compania": "pareja, amigos, familia",
+    "icono": "film"
+  },
+  {
+    "id": 4,
+    "nombre": "El viaje de Chihiro",
+    "categoria": "peliculas",
+    "subcategoria": "Animación / Fantasía",
+    "descripcion": "Fábula mágica de Studio Ghibli sobre un mundo espiritual lleno de criaturas inolvidables.",
+    "etiquetas": [
+      "animacion",
+      "fantasia",
+      "magia",
+      "nostalgico",
+      "arte"
+    ],
+    "texto": "El viaje de Chihiro Animación / Fantasía Fábula mágica de Studio Ghibli sobre un mundo espiritual lleno de criaturas inolvidables. animacion fantasia magia nostalgico arte ghibli japon espiritual amistad aventura relajado inspirador familia creativo economico medio solo pareja familia",
+    "tono": "creativo",
+    "presupuesto": "economico",
+    "duracion": "medio",
+    "compania": "solo, pareja, familia",
+    "icono": "film"
+  },
+  {
+    "id": 5,
+    "nombre": "Mad Max: Furia en el camino",
+    "categoria": "peliculas",
+    "subcategoria": "Acción",
+    "descripcion": "Persecución implacable por el desierto con dirección visual espectacular y pura adrenalina.",
+    "etiquetas": [
+      "accion",
+      "persecucion",
+      "adrenalina",
+      "postapocaliptico",
+      "intenso"
+    ],
+    "texto": "Mad Max: Furia en el camino Acción Persecución implacable por el desierto con dirección visual espectacular y pura adrenalina. accion persecucion adrenalina postapocaliptico intenso autos velocidad combate ritmo rapido energia explosion violencia adrenalina economico medio solo amigos",
+    "tono": "adrenalina",
+    "presupuesto": "economico",
+    "duracion": "medio",
+    "compania": "solo, amigos",
+    "icono": "film"
+  },
+  {
+    "id": 6,
+    "nombre": "Cuestión de tiempo (About Time)",
+    "categoria": "peliculas",
+    "subcategoria": "Romance / Comedia",
+    "descripcion": "Un joven descubre que puede viajar en el tiempo y aprende a valorar cada día cotidiano.",
+    "etiquetas": [
+      "romance",
+      "emotivo",
+      "familia",
+      "comedia",
+      "pareja"
+    ],
+    "texto": "Cuestión de tiempo (About Time) Romance / Comedia Un joven descubre que puede viajar en el tiempo y aprende a valorar cada día cotidiano. romance emotivo familia comedia pareja amor vida cotidiana londres calido sensible nostalgia corazon emotivo economico medio solo pareja",
+    "tono": "emotivo",
+    "presupuesto": "economico",
+    "duracion": "medio",
+    "compania": "solo, pareja",
+    "icono": "film"
+  },
+  {
+    "id": 7,
+    "nombre": "Parásitos",
+    "categoria": "peliculas",
+    "subcategoria": "Thriller / Drama",
+    "descripcion": "Sátira mordaz y llena de tensión sobre dos familias de mundos opuestos que se entrelazan.",
+    "etiquetas": [
+      "suspenso",
+      "giros",
+      "critica social",
+      "oscuro",
+      "inteligente"
+    ],
+    "texto": "Parásitos Thriller / Drama Sátira mordaz y llena de tensión sobre dos familias de mundos opuestos que se entrelazan. suspenso giros critica social oscuro inteligente corea tension thriller drama sorpresa oscuro psicologico oscuro economico medio solo pareja amigos",
+    "tono": "oscuro",
+    "presupuesto": "economico",
+    "duracion": "medio",
+    "compania": "solo, pareja, amigos",
+    "icono": "film"
+  },
+  {
+    "id": 8,
+    "nombre": "El legado del diablo (Hereditary)",
+    "categoria": "peliculas",
+    "subcategoria": "Terror psicológico",
+    "descripcion": "Terror atmosférico perturbador sobre secretos familiares y una presencia implacable.",
+    "etiquetas": [
+      "terror",
+      "miedo",
+      "sustos",
+      "oscuro",
+      "psicologico"
+    ],
+    "texto": "El legado del diablo (Hereditary) Terror psicológico Terror atmosférico perturbador sobre secretos familiares y una presencia implacable. terror miedo sustos oscuro psicologico horror casa familia maldicion tension miedo intenso oscuro oscuro economico medio solo amigos",
+    "tono": "oscuro",
+    "presupuesto": "economico",
+    "duracion": "medio",
+    "compania": "solo, amigos",
+    "icono": "film"
+  },
+  {
+    "id": 9,
+    "nombre": "La La Land",
+    "categoria": "peliculas",
+    "subcategoria": "Musical / Romance",
+    "descripcion": "Historia luminosa de dos soñadores en Los Ángeles entre jazz, cine y ambiciones artísticas.",
+    "etiquetas": [
+      "musical",
+      "romance",
+      "jazz",
+      "arte",
+      "nostalgico"
+    ],
+    "texto": "La La Land Musical / Romance Historia luminosa de dos soñadores en Los Ángeles entre jazz, cine y ambiciones artísticas. musical romance jazz arte nostalgico musica baile suenos amor colores fotografia melancolia creativo emotivo economico medio solo pareja",
+    "tono": "emotivo",
+    "presupuesto": "economico",
+    "duracion": "medio",
+    "compania": "solo, pareja",
+    "icono": "film"
+  },
+  {
+    "id": 10,
+    "nombre": "Mi maestro el pulpo",
+    "categoria": "peliculas",
+    "subcategoria": "Documental / Naturaleza",
+    "descripcion": "Relato íntimo de un cineasta que construye una amistad insólita con un pulpo salvaje.",
+    "etiquetas": [
+      "documental",
+      "naturaleza",
+      "mar",
+      "relajado",
+      "inspirador"
+    ],
+    "texto": "Mi maestro el pulpo Documental / Naturaleza Relato íntimo de un cineasta que construye una amistad insólita con un pulpo salvaje. documental naturaleza mar relajado inspirador oceano fotografia calma reflexion animales biologo lento contemplativo relajado economico corto solo pareja familia",
+    "tono": "relajado",
+    "presupuesto": "economico",
+    "duracion": "corto",
+    "compania": "solo, pareja, familia",
+    "icono": "film"
+  },
+  {
+    "id": 11,
+    "nombre": "Todo en todas partes al mismo tiempo",
+    "categoria": "peliculas",
+    "subcategoria": "Ciencia ficción / Comedia",
+    "descripcion": "Aventura multiversal absurda, emotiva y desbordante de creatividad visual.",
+    "etiquetas": [
+      "ciencia ficcion",
+      "multiverso",
+      "comedia",
+      "creativo",
+      "accion"
+    ],
+    "texto": "Todo en todas partes al mismo tiempo Ciencia ficción / Comedia Aventura multiversal absurda, emotiva y desbordante de creatividad visual. ciencia ficcion multiverso comedia creativo accion locura familia artes marciales giros original energia emotivo creativo economico medio solo pareja amigos",
+    "tono": "creativo",
+    "presupuesto": "economico",
+    "duracion": "medio",
+    "compania": "solo, pareja, amigos",
+    "icono": "film"
+  },
+  {
+    "id": 12,
+    "nombre": "Chef (A fuego lento)",
+    "categoria": "peliculas",
+    "subcategoria": "Comedia / Gastronomía",
+    "descripcion": "Un cocinero deja un restaurante rígido para recorrer Estados Unidos en un food truck con su hijo.",
+    "etiquetas": [
+      "comida",
+      "comedia",
+      "relajado",
+      "familia",
+      "viaje"
+    ],
+    "texto": "Chef (A fuego lento) Comedia / Gastronomía Un cocinero deja un restaurante rígido para recorrer Estados Unidos en un food truck con su hijo. comida comedia relajado familia viaje cocina cubanos musica viaje carretera optimista ligero comida relajado economico medio solo pareja familia",
+    "tono": "relajado",
+    "presupuesto": "economico",
+    "duracion": "medio",
+    "compania": "solo, pareja, familia",
+    "icono": "film"
+  },
+  {
+    "id": 13,
+    "nombre": "Duna: Parte Dos",
+    "categoria": "peliculas",
+    "subcategoria": "Ciencia ficción / Épica",
+    "descripcion": "Epopeya visual monumental en el desierto de Arrakis sobre poder, profecía y destino.",
+    "etiquetas": [
+      "ciencia ficcion",
+      "epica",
+      "aventura",
+      "visual",
+      "intenso"
+    ],
+    "texto": "Duna: Parte Dos Ciencia ficción / Épica Epopeya visual monumental en el desierto de Arrakis sobre poder, profecía y destino. ciencia ficcion epica aventura visual intenso desierto arena imperio espacio futuro musica hans zimmer largo adrenalina economico largo solo amigos",
+    "tono": "adrenalina",
+    "presupuesto": "economico",
+    "duracion": "largo",
+    "compania": "solo, amigos",
+    "icono": "film"
+  },
+  {
+    "id": 14,
+    "nombre": "El Gran Hotel Budapest",
+    "categoria": "peliculas",
+    "subcategoria": "Comedia / Aventura",
+    "descripcion": "Comedia estilizada de Wes Anderson llena de simetría, humor seco y un robo extravagante.",
+    "etiquetas": [
+      "comedia",
+      "arte",
+      "estetica",
+      "misterio",
+      "creativo"
+    ],
+    "texto": "El Gran Hotel Budapest Comedia / Aventura Comedia estilizada de Wes Anderson llena de simetría, humor seco y un robo extravagante. comedia arte estetica misterio creativo europa hotel pintura aventura ingenio colorido divertido rapido divertido economico medio solo pareja amigos",
+    "tono": "divertido",
+    "presupuesto": "economico",
+    "duracion": "medio",
+    "compania": "solo, pareja, amigos",
+    "icono": "film"
+  },
+  {
+    "id": 15,
+    "nombre": "Intensamente (Inside Out)",
+    "categoria": "peliculas",
+    "subcategoria": "Animación / Familia",
+    "descripcion": "Viaje tierno e ingenioso al interior de la mente y las emociones humanas.",
+    "etiquetas": [
+      "animacion",
+      "familia",
+      "emotivo",
+      "psicologia",
+      "divertido"
+    ],
+    "texto": "Intensamente (Inside Out) Animación / Familia Viaje tierno e ingenioso al interior de la mente y las emociones humanas. animacion familia emotivo psicologia divertido ninos mente sentimientos alegria tristeza risa corazon emotivo economico medio solo familia pareja",
+    "tono": "emotivo",
+    "presupuesto": "economico",
+    "duracion": "medio",
+    "compania": "solo, familia, pareja",
+    "icono": "film"
+  },
+  {
+    "id": 16,
+    "nombre": "Blade Runner 2049",
+    "categoria": "peliculas",
+    "subcategoria": "Ciencia ficción / Noir",
+    "descripcion": "Neón, lluvia y preguntas filosóficas sobre memoria e identidad en un futuro distópico.",
+    "etiquetas": [
+      "ciencia ficcion",
+      "cyberpunk",
+      "oscuro",
+      "visual",
+      "reflexivo"
+    ],
+    "texto": "Blade Runner 2049 Ciencia ficción / Noir Neón, lluvia y preguntas filosóficas sobre memoria e identidad en un futuro distópico. ciencia ficcion cyberpunk oscuro visual reflexivo futuro inteligencia artificial estetica fotografia lento contemplativo oscuro economico largo solo pareja",
+    "tono": "oscuro",
+    "presupuesto": "economico",
+    "duracion": "largo",
+    "compania": "solo, pareja",
+    "icono": "film"
+  },
+  {
+    "id": 17,
+    "nombre": "Dark",
+    "categoria": "series",
+    "subcategoria": "Ciencia ficción / Misterio",
+    "descripcion": "Un enigma intergeneracional de viajes en el tiempo en un pueblo alemán lleno de secretos.",
+    "etiquetas": [
+      "misterio",
+      "ciencia ficcion",
+      "oscuro",
+      "giros",
+      "complejo"
+    ],
+    "texto": "Dark Ciencia ficción / Misterio Un enigma intergeneracional de viajes en el tiempo en un pueblo alemán lleno de secretos. misterio ciencia ficcion oscuro giros complejo tiempo paradoja suspenso rompecabezas alemania oscuro intenso oscuro economico largo solo pareja",
+    "tono": "oscuro",
+    "presupuesto": "economico",
+    "duracion": "largo",
+    "compania": "solo, pareja",
+    "icono": "tv"
+  },
+  {
+    "id": 18,
+    "nombre": "Ted Lasso",
+    "categoria": "series",
+    "subcategoria": "Comedia / Feel-good",
+    "descripcion": "Un optimista entrenador estadounidense dirige un club de fútbol inglés conquistando corazones.",
+    "etiquetas": [
+      "comedia",
+      "optimista",
+      "deportes",
+      "amistad",
+      "ligero"
+    ],
+    "texto": "Ted Lasso Comedia / Feel-good Un optimista entrenador estadounidense dirige un club de fútbol inglés conquistando corazones. comedia optimista deportes amistad ligero humor futbol bienestar trabajo en equipo calido divertido facil divertido economico corto solo pareja familia",
+    "tono": "divertido",
+    "presupuesto": "economico",
+    "duracion": "corto",
+    "compania": "solo, pareja, familia",
+    "icono": "tv"
+  },
+  {
+    "id": 19,
+    "nombre": "Severance (Separación)",
+    "categoria": "series",
+    "subcategoria": "Thriller / Ciencia ficción",
+    "descripcion": "Empleados dividen quirúrgicamente sus recuerdos laborales de los personales con inquietantes consecuencias.",
+    "etiquetas": [
+      "suspenso",
+      "ciencia ficcion",
+      "oficina",
+      "misterio",
+      "psicologico"
+    ],
+    "texto": "Severance (Separación) Thriller / Ciencia ficción Empleados dividen quirúrgicamente sus recuerdos laborales de los personales con inquietantes consecuencias. suspenso ciencia ficcion oficina misterio psicologico tecnologia trabajo misterio estetica minimalista giros tension curioso economico medio solo pareja",
+    "tono": "curioso",
+    "presupuesto": "economico",
+    "duracion": "medio",
+    "compania": "solo, pareja",
+    "icono": "tv"
+  },
+  {
+    "id": 20,
+    "nombre": "The Bear",
+    "categoria": "series",
+    "subcategoria": "Drama / Gastronomía",
+    "descripcion": "Un joven chef de alta cocina intenta rescatar el humilde local familiar de sándwiches en Chicago.",
+    "etiquetas": [
+      "comida",
+      "drama",
+      "intenso",
+      "cocina",
+      "ritmo rapido"
+    ],
+    "texto": "The Bear Drama / Gastronomía Un joven chef de alta cocina intenta rescatar el humilde local familiar de sándwiches en Chicago. comida drama intenso cocina ritmo rapido restaurante pasion estres familia superacion cocina intenso adrenalina economico corto solo pareja",
+    "tono": "adrenalina",
+    "presupuesto": "economico",
+    "duracion": "corto",
+    "compania": "solo, pareja",
+    "icono": "tv"
+  },
+  {
+    "id": 21,
+    "nombre": "Avatar: La leyenda de Aang",
+    "categoria": "series",
+    "subcategoria": "Animación / Aventura",
+    "descripcion": "Aventura épica de amistad, equilibrio y dominio elemental ideal para cualquier edad.",
+    "etiquetas": [
+      "animacion",
+      "fantasia",
+      "aventura",
+      "amistad",
+      "humor"
+    ],
+    "texto": "Avatar: La leyenda de Aang Animación / Aventura Aventura épica de amistad, equilibrio y dominio elemental ideal para cualquier edad. animacion fantasia aventura amistad humor elementos viaje equipo sabiduria accion familia divertido creativo economico medio solo amigos familia",
+    "tono": "creativo",
+    "presupuesto": "economico",
+    "duracion": "medio",
+    "compania": "solo, amigos, familia",
+    "icono": "tv"
+  },
+  {
+    "id": 22,
+    "nombre": "Nuestro Planeta",
+    "categoria": "series",
+    "subcategoria": "Documental / Naturaleza",
+    "descripcion": "Imágenes asombrosas de ecosistemas salvajes narradas con calma y belleza cinematográfica.",
+    "etiquetas": [
+      "documental",
+      "naturaleza",
+      "relajado",
+      "fotografia",
+      "animales"
+    ],
+    "texto": "Nuestro Planeta Documental / Naturaleza Imágenes asombrosas de ecosistemas salvajes narradas con calma y belleza cinematográfica. documental naturaleza relajado fotografia animales tierra bosques oceanos calma aprender contemplativo familia relajado economico medio solo pareja familia",
+    "tono": "relajado",
+    "presupuesto": "economico",
+    "duracion": "medio",
+    "compania": "solo, pareja, familia",
+    "icono": "tv"
+  },
+  {
+    "id": 23,
+    "nombre": "Arcane",
+    "categoria": "series",
+    "subcategoria": "Animación / Acción",
+    "descripcion": "Obra visual deslumbrante sobre dos hermanas en ciudades enfrentadas entre magia y tecnología.",
+    "etiquetas": [
+      "animacion",
+      "accion",
+      "steampunk",
+      "arte",
+      "emotivo"
+    ],
+    "texto": "Arcane Animación / Acción Obra visual deslumbrante sobre dos hermanas en ciudades enfrentadas entre magia y tecnología. animacion accion steampunk arte emotivo musica arte conflicto fantasia drama intenso visual adrenalina economico medio solo amigos",
+    "tono": "adrenalina",
+    "presupuesto": "economico",
+    "duracion": "medio",
+    "compania": "solo, amigos",
+    "icono": "tv"
+  },
+  {
+    "id": 24,
+    "nombre": "Only Murders in the Building",
+    "categoria": "series",
+    "subcategoria": "Misterio / Comedia",
+    "descripcion": "Tres vecinos fanáticos del true crime resuelven asesinatos mientras graban su propio pódcast.",
+    "etiquetas": [
+      "misterio",
+      "comedia",
+      "ligero",
+      "nueva york",
+      "enigma"
+    ],
+    "texto": "Only Murders in the Building Misterio / Comedia Tres vecinos fanáticos del true crime resuelven asesinatos mientras graban su propio pódcast. misterio comedia ligero nueva york enigma podcast detectives diversion vecinos humor suave divertido economico corto solo pareja familia",
+    "tono": "divertido",
+    "presupuesto": "economico",
+    "duracion": "corto",
+    "compania": "solo, pareja, familia",
+    "icono": "tv"
+  },
+  {
+    "id": 25,
+    "nombre": "Black Mirror",
+    "categoria": "series",
+    "subcategoria": "Antología / Tecnología",
+    "descripcion": "Episodios independientes que exploran el lado inquietante de la tecnología y la sociedad moderna.",
+    "etiquetas": [
+      "tecnologia",
+      "ciencia ficcion",
+      "oscuro",
+      "reflexivo",
+      "giros"
+    ],
+    "texto": "Black Mirror Antología / Tecnología Episodios independientes que exploran el lado inquietante de la tecnología y la sociedad moderna. tecnologia ciencia ficcion oscuro reflexivo giros futuro redes sociales inteligencia artificial distopia corto oscuro economico medio solo amigos",
+    "tono": "oscuro",
+    "presupuesto": "economico",
+    "duracion": "medio",
+    "compania": "solo, amigos",
+    "icono": "tv"
+  },
+  {
+    "id": 26,
+    "nombre": "Frieren: Más allá del final del viaje",
+    "categoria": "series",
+    "subcategoria": "Anime / Fantasía",
+    "descripcion": "Una elfa inmortal reflexiona sobre la amistad y el paso del tiempo tras derrotar al rey demonio.",
+    "etiquetas": [
+      "anime",
+      "fantasia",
+      "relajado",
+      "emotivo",
+      "viaje"
+    ],
+    "texto": "Frieren: Más allá del final del viaje Anime / Fantasía Una elfa inmortal reflexiona sobre la amistad y el paso del tiempo tras derrotar al rey demonio. anime fantasia relajado emotivo viaje magia nostalgia paisajes calma filosofia aventura contemplativo relajado economico corto solo pareja",
+    "tono": "relajado",
+    "presupuesto": "economico",
+    "duracion": "corto",
+    "compania": "solo, pareja",
+    "icono": "tv"
+  },
+  {
+    "id": 27,
+    "nombre": "Succession",
+    "categoria": "series",
+    "subcategoria": "Drama / Sátira",
+    "descripcion": "Lucha despiadada por el control de un imperio mediático con diálogos afilados.",
+    "etiquetas": [
+      "drama",
+      "negocios",
+      "humor negro",
+      "familia",
+      "intenso"
+    ],
+    "texto": "Succession Drama / Sátira Lucha despiadada por el control de un imperio mediático con diálogos afilados. drama negocios humor negro familia intenso empresa poder dinero dialogo ingenioso lujo conflicto oscuro economico largo solo pareja",
+    "tono": "oscuro",
+    "presupuesto": "economico",
+    "duracion": "largo",
+    "compania": "solo, pareja",
+    "icono": "tv"
+  },
+  {
+    "id": 28,
+    "nombre": "Chef's Table",
+    "categoria": "series",
+    "subcategoria": "Documental / Gastronomía",
+    "descripcion": "Retratos íntimos y sensoriales de los cocineros más creativos del mundo y sus platos.",
+    "etiquetas": [
+      "comida",
+      "documental",
+      "arte",
+      "inspirador",
+      "viajes"
+    ],
+    "texto": "Chef's Table Documental / Gastronomía Retratos íntimos y sensoriales de los cocineros más creativos del mundo y sus platos. comida documental arte inspirador viajes gastronomia ingredientes recetas creatividad cultura relajado creativo economico medio solo pareja",
+    "tono": "creativo",
+    "presupuesto": "economico",
+    "duracion": "medio",
+    "compania": "solo, pareja",
+    "icono": "tv"
+  },
+  {
+    "id": 29,
+    "nombre": "Proyecto Hail Mary — Andy Weir",
+    "categoria": "libros",
+    "subcategoria": "Ciencia ficción",
+    "descripcion": "Un astronauta despierta solo en una nave espacial y debe usar la ciencia para salvar la Tierra.",
+    "etiquetas": [
+      "ciencia ficcion",
+      "ciencia",
+      "espacio",
+      "aventura",
+      "optimista"
+    ],
+    "texto": "Proyecto Hail Mary — Andy Weir Ciencia ficción Un astronauta despierta solo en una nave espacial y debe usar la ciencia para salvar la Tierra. ciencia ficcion ciencia espacio aventura optimista fisica quimica ingenio humor misterio amistad astronauta curioso economico largo solo",
+    "tono": "curioso",
+    "presupuesto": "economico",
+    "duracion": "largo",
+    "compania": "solo",
+    "icono": "book"
+  },
+  {
+    "id": 30,
+    "nombre": "Sapiens: De animales a dioses — Yuval Noah Harari",
+    "categoria": "libros",
+    "subcategoria": "Historia / Divulgación",
+    "descripcion": "Un recorrido fascinante por cómo la humanidad construyó imperios, dinero, ciencia y mitos.",
+    "etiquetas": [
+      "historia",
+      "ciencia",
+      "sociedad",
+      "curiosidad",
+      "ensayo"
+    ],
+    "texto": "Sapiens: De animales a dioses — Yuval Noah Harari Historia / Divulgación Un recorrido fascinante por cómo la humanidad construyó imperios, dinero, ciencia y mitos. historia ciencia sociedad curiosidad ensayo evolucion imperios cultura filosofia aprender reflexivo curioso economico largo solo",
+    "tono": "curioso",
+    "presupuesto": "economico",
+    "duracion": "largo",
+    "compania": "solo",
+    "icono": "book"
+  },
+  {
+    "id": 31,
+    "nombre": "La sombra del viento — Carlos Ruiz Zafón",
+    "categoria": "libros",
+    "subcategoria": "Novela / Misterio",
+    "descripcion": "En la Barcelona de posguerra, un joven descubre un libro maldito que cambia su destino.",
+    "etiquetas": [
+      "novela",
+      "misterio",
+      "nostalgico",
+      "barcelona",
+      "romance"
+    ],
+    "texto": "La sombra del viento — Carlos Ruiz Zafón Novela / Misterio En la Barcelona de posguerra, un joven descubre un libro maldito que cambia su destino. novela misterio nostalgico barcelona romance libros secretos amor suspenso historia atmosfera emotivo emotivo economico largo solo",
+    "tono": "emotivo",
+    "presupuesto": "economico",
+    "duracion": "largo",
+    "compania": "solo",
+    "icono": "book"
+  },
+  {
+    "id": 32,
+    "nombre": "Hábitos Atómicos — James Clear",
+    "categoria": "libros",
+    "subcategoria": "Crecimiento / Productividad",
+    "descripcion": "Guía práctica y clara para transformar rutinas diarias con mejoras pequeñas y medibles.",
+    "etiquetas": [
+      "habitos",
+      "productividad",
+      "psicologia",
+      "practico",
+      "negocios"
+    ],
+    "texto": "Hábitos Atómicos — James Clear Crecimiento / Productividad Guía práctica y clara para transformar rutinas diarias con mejoras pequeñas y medibles. habitos productividad psicologia practico negocios mejora personal metas organizacion trabajo disciplina claro creativo economico medio solo",
+    "tono": "creativo",
+    "presupuesto": "economico",
+    "duracion": "medio",
+    "compania": "solo",
+    "icono": "book"
+  },
+  {
+    "id": 33,
+    "nombre": "El Hobbit — J.R.R. Tolkien",
+    "categoria": "libros",
+    "subcategoria": "Fantasía / Aventura",
+    "descripcion": "Un hobbit hogareño emprende un viaje inesperado lleno de dragones, mapas y camaradería.",
+    "etiquetas": [
+      "fantasia",
+      "aventura",
+      "viaje",
+      "magia",
+      "clasico"
+    ],
+    "texto": "El Hobbit — J.R.R. Tolkien Fantasía / Aventura Un hobbit hogareño emprende un viaje inesperado lleno de dragones, mapas y camaradería. fantasia aventura viaje magia clasico dragones amistad montanas aventura acogedor entretenido creativo economico medio solo familia",
+    "tono": "creativo",
+    "presupuesto": "economico",
+    "duracion": "medio",
+    "compania": "solo, familia",
+    "icono": "book"
+  },
+  {
+    "id": 34,
+    "nombre": "Sal, grasa, ácido, calor — Samin Nosrat",
+    "categoria": "libros",
+    "subcategoria": "Cocina / Gastronomía",
+    "descripcion": "Domina los cuatro pilares universales de la buena cocina con ilustraciones y humor.",
+    "etiquetas": [
+      "cocina",
+      "comida",
+      "recetas",
+      "aprender",
+      "ilustrado"
+    ],
+    "texto": "Sal, grasa, ácido, calor — Samin Nosrat Cocina / Gastronomía Domina los cuatro pilares universales de la buena cocina con ilustraciones y humor. cocina comida recetas aprender ilustrado ingredientes tecnicas sabor cocinar creativo casa relajado moderado medio solo pareja",
+    "tono": "relajado",
+    "presupuesto": "moderado",
+    "duracion": "medio",
+    "compania": "solo, pareja",
+    "icono": "book"
+  },
+  {
+    "id": 35,
+    "nombre": "El problema de los tres cuerpos — Cixin Liu",
+    "categoria": "libros",
+    "subcategoria": "Ciencia ficción dura",
+    "descripcion": "Una señal enviada al espacio desencadena una conspiración científica a escala cósmica.",
+    "etiquetas": [
+      "ciencia ficcion",
+      "fisica",
+      "misterio",
+      "universo",
+      "tecnologia"
+    ],
+    "texto": "El problema de los tres cuerpos — Cixin Liu Ciencia ficción dura Una señal enviada al espacio desencadena una conspiración científica a escala cósmica. ciencia ficcion fisica misterio universo tecnologia espacio alienigenas historia china ciencia complejo futuro curioso economico largo solo",
+    "tono": "curioso",
+    "presupuesto": "economico",
+    "duracion": "largo",
+    "compania": "solo",
+    "icono": "book"
+  },
+  {
+    "id": 36,
+    "nombre": "Cien años de soledad — Gabriel García Márquez",
+    "categoria": "libros",
+    "subcategoria": "Novela / Realismo mágico",
+    "descripcion": "La saga mítica de la familia Buendía en Macondo, entre memoria, amor y destino.",
+    "etiquetas": [
+      "novela",
+      "realismo magico",
+      "clasico",
+      "familia",
+      "latinoamerica"
+    ],
+    "texto": "Cien años de soledad — Gabriel García Márquez Novela / Realismo mágico La saga mítica de la familia Buendía en Macondo, entre memoria, amor y destino. novela realismo magico clasico familia latinoamerica literatura poesia historia fantasia emotivo profundo emotivo economico largo solo",
+    "tono": "emotivo",
+    "presupuesto": "economico",
+    "duracion": "largo",
+    "compania": "solo",
+    "icono": "book"
+  },
+  {
+    "id": 37,
+    "nombre": "El hombre en busca de sentido — Viktor Frankl",
+    "categoria": "libros",
+    "subcategoria": "Psicología / Filosofía",
+    "descripcion": "Testimonio conmovedor y lección profunda sobre cómo hallar propósito incluso en la adversidad.",
+    "etiquetas": [
+      "psicologia",
+      "filosofia",
+      "emotivo",
+      "reflexivo",
+      "corto"
+    ],
+    "texto": "El hombre en busca de sentido — Viktor Frankl Psicología / Filosofía Testimonio conmovedor y lección profunda sobre cómo hallar propósito incluso en la adversidad. psicologia filosofia emotivo reflexivo corto resiliencia vida sentido historia superacion emotivo economico corto solo",
+    "tono": "emotivo",
+    "presupuesto": "economico",
+    "duracion": "corto",
+    "compania": "solo",
+    "icono": "book"
+  },
+  {
+    "id": 38,
+    "nombre": "Diez negritos (Y no quedó ninguno) — Agatha Christie",
+    "categoria": "libros",
+    "subcategoria": "Misterio / Policial",
+    "descripcion": "Diez desconocidos aislados en una isla van cayendo uno a uno bajo un plan calculado.",
+    "etiquetas": [
+      "misterio",
+      "suspenso",
+      "detective",
+      "giros",
+      "rapido"
+    ],
+    "texto": "Diez negritos (Y no quedó ninguno) — Agatha Christie Misterio / Policial Diez desconocidos aislados en una isla van cayendo uno a uno bajo un plan calculado. misterio suspenso detective giros rapido enigma crimen isla suspenso facil de leer entretenido oscuro economico corto solo",
+    "tono": "oscuro",
+    "presupuesto": "economico",
+    "duracion": "corto",
+    "compania": "solo",
+    "icono": "book"
+  },
+  {
+    "id": 39,
+    "nombre": "La psicología del dinero — Morgan Housel",
+    "categoria": "libros",
+    "subcategoria": "Finanzas / Negocios",
+    "descripcion": "Historias breves que explican cómo nuestras emociones gobiernan nuestras decisiones financieras.",
+    "etiquetas": [
+      "finanzas",
+      "negocios",
+      "psicologia",
+      "practico",
+      "inversion"
+    ],
+    "texto": "La psicología del dinero — Morgan Housel Finanzas / Negocios Historias breves que explican cómo nuestras emociones gobiernan nuestras decisiones financieras. finanzas negocios psicologia practico inversion dinero ahorro estrategia mente empresa claro curioso economico corto solo",
+    "tono": "curioso",
+    "presupuesto": "economico",
+    "duracion": "corto",
+    "compania": "solo",
+    "icono": "book"
+  },
+  {
+    "id": 40,
+    "nombre": "Cosmos — Carl Sagan",
+    "categoria": "libros",
+    "subcategoria": "Ciencia / Astronomía",
+    "descripcion": "Un canto poético a la astronomía, la evolución y nuestro lugar en el universo.",
+    "etiquetas": [
+      "ciencia",
+      "universo",
+      "astronomia",
+      "inspirador",
+      "historia"
+    ],
+    "texto": "Cosmos — Carl Sagan Ciencia / Astronomía Un canto poético a la astronomía, la evolución y nuestro lugar en el universo. ciencia universo astronomia inspirador historia estrellas planetas filosofia curiosidad maravilla relajado economico medio solo",
+    "tono": "relajado",
+    "presupuesto": "economico",
+    "duracion": "medio",
+    "compania": "solo",
+    "icono": "book"
+  },
+  {
+    "id": 41,
+    "nombre": "Lofi Beats & Jazz de Medianoche",
+    "categoria": "musica",
+    "subcategoria": "Lo-Fi / Chillhop",
+    "descripcion": "Ritmos cálidos de vinilo, piano eléctrico suave y texturas relajantes para estudiar o desconectar.",
+    "etiquetas": [
+      "relajado",
+      "estudio",
+      "jazz",
+      "instrumental",
+      "calma"
+    ],
+    "texto": "Lofi Beats & Jazz de Medianoche Lo-Fi / Chillhop Ritmos cálidos de vinilo, piano eléctrico suave y texturas relajantes para estudiar o desconectar. relajado estudio jazz instrumental calma concentracion cafe lluvia noche tranquilo sin letra relajado economico corto solo pareja",
+    "tono": "relajado",
+    "presupuesto": "economico",
+    "duracion": "corto",
+    "compania": "solo, pareja",
+    "icono": "music"
+  },
+  {
+    "id": 42,
+    "nombre": "Discovery — Daft Punk",
+    "categoria": "musica",
+    "subcategoria": "Electrónica / French House",
+    "descripcion": "Clásico luminoso de sintetizadores, groove retrofuturista y energía positiva de principio a fin.",
+    "etiquetas": [
+      "electronica",
+      "bailar",
+      "energia",
+      "retro",
+      "futurista"
+    ],
+    "texto": "Discovery — Daft Punk Electrónica / French House Clásico luminoso de sintetizadores, groove retrofuturista y energía positiva de principio a fin. electronica bailar energia retro futurista fiesta sintetizadores ritmo divertido carretera amigos divertido economico medio solo amigos",
+    "tono": "divertido",
+    "presupuesto": "economico",
+    "duracion": "medio",
+    "compania": "solo, amigos",
+    "icono": "music"
+  },
+  {
+    "id": 43,
+    "nombre": "Kind of Blue — Miles Davis",
+    "categoria": "musica",
+    "subcategoria": "Jazz clásico",
+    "descripcion": "Elegancia atemporal de trompeta y saxofón perfecta para una noche serena o una cena especial.",
+    "etiquetas": [
+      "jazz",
+      "clasico",
+      "nocturno",
+      "sofisticado",
+      "instrumental"
+    ],
+    "texto": "Kind of Blue — Miles Davis Jazz clásico Elegancia atemporal de trompeta y saxofón perfecta para una noche serena o una cena especial. jazz clasico nocturno sofisticado instrumental vinilo calma pareja copa elegante reflexivo relajado economico medio solo pareja",
+    "tono": "relajado",
+    "presupuesto": "economico",
+    "duracion": "medio",
+    "compania": "solo, pareja",
+    "icono": "music"
+  },
+  {
+    "id": 44,
+    "nombre": "El Madrileño — C. Tangana",
+    "categoria": "musica",
+    "subcategoria": "Pop latino / Fusión",
+    "descripcion": "Fusión audaz de bolero, flamenco, rumba y sonidos urbanos contemporáneos con gran producción.",
+    "etiquetas": [
+      "latino",
+      "fusion",
+      "emotivo",
+      "fiesta",
+      "espanol"
+    ],
+    "texto": "El Madrileño — C. Tangana Pop latino / Fusión Fusión audaz de bolero, flamenco, rumba y sonidos urbanos contemporáneos con gran producción. latino fusion emotivo fiesta espanol guitarra ritmo nostalgia moderna amigos voz creativo economico medio solo pareja amigos",
+    "tono": "creativo",
+    "presupuesto": "economico",
+    "duracion": "medio",
+    "compania": "solo, pareja, amigos",
+    "icono": "music"
+  },
+  {
+    "id": 45,
+    "nombre": "Bandas Sonoras Épicas (Hans Zimmer / Joe Hisaishi)",
+    "categoria": "musica",
+    "subcategoria": "Orquestal / Cine",
+    "descripcion": "Piezas sinfónicas cargadas de emoción para inspirarse, leer o imaginar mundos gigantes.",
+    "etiquetas": [
+      "orquestal",
+      "cine",
+      "epico",
+      "emotivo",
+      "instrumental"
+    ],
+    "texto": "Bandas Sonoras Épicas (Hans Zimmer / Joe Hisaishi) Orquestal / Cine Piezas sinfónicas cargadas de emoción para inspirarse, leer o imaginar mundos gigantes. orquestal cine epico emotivo instrumental piano cuerdas aventura inspiracion concentracion fantasia emotivo economico medio solo",
+    "tono": "emotivo",
+    "presupuesto": "economico",
+    "duracion": "medio",
+    "compania": "solo",
+    "icono": "music"
+  },
+  {
+    "id": 46,
+    "nombre": "Synthwave Nocturno (Midnight Drive)",
+    "categoria": "musica",
+    "subcategoria": "Synthwave / Retro 80s",
+    "descripcion": "Bajos analógicos y melodías neón ideales para conducir de noche o programar con enfoque.",
+    "etiquetas": [
+      "synthwave",
+      "retro",
+      "nocturno",
+      "energia",
+      "cyberpunk"
+    ],
+    "texto": "Synthwave Nocturno (Midnight Drive) Synthwave / Retro 80s Bajos analógicos y melodías neón ideales para conducir de noche o programar con enfoque. synthwave retro nocturno energia cyberpunk coche ciudad luces tecnologia concentracion ritmo adrenalina economico medio solo amigos",
+    "tono": "adrenalina",
+    "presupuesto": "economico",
+    "duracion": "medio",
+    "compania": "solo, amigos",
+    "icono": "music"
+  },
+  {
+    "id": 47,
+    "nombre": "Currents — Tame Impala",
+    "categoria": "musica",
+    "subcategoria": "Indie / Psicodélico",
+    "descripcion": "Capas hipnóticas de pop psicodélico y sintetizadores sobre el cambio personal.",
+    "etiquetas": [
+      "indie",
+      "psicodelico",
+      "moderno",
+      "creativo",
+      "melodico"
+    ],
+    "texto": "Currents — Tame Impala Indie / Psicodélico Capas hipnóticas de pop psicodélico y sintetizadores sobre el cambio personal. indie psicodelico moderno creativo melodico rock suave sintetizador reflexivo vibra nocturna creativo economico medio solo pareja amigos",
+    "tono": "creativo",
+    "presupuesto": "economico",
+    "duracion": "medio",
+    "compania": "solo, pareja, amigos",
+    "icono": "music"
+  },
+  {
+    "id": 48,
+    "nombre": "Un Verano Sin Ti — Bad Bunny",
+    "categoria": "musica",
+    "subcategoria": "Urbano / Caribeño",
+    "descripcion": "Ritmos playeros, mambo y reguetón festivo para subir el ánimo al instante.",
+    "etiquetas": [
+      "urbano",
+      "playa",
+      "fiesta",
+      "verano",
+      "divertido"
+    ],
+    "texto": "Un Verano Sin Ti — Bad Bunny Urbano / Caribeño Ritmos playeros, mambo y reguetón festivo para subir el ánimo al instante. urbano playa fiesta verano divertido baile amigos coche sol energia alegre divertido economico medio amigos pareja",
+    "tono": "divertido",
+    "presupuesto": "economico",
+    "duracion": "medio",
+    "compania": "amigos, pareja",
+    "icono": "music"
+  },
+  {
+    "id": 49,
+    "nombre": "Folklore — Taylor Swift",
+    "categoria": "musica",
+    "subcategoria": "Indie Folk / Pop",
+    "descripcion": "Baladas acústicas íntimas llenas de relatos cotidianos, piano suave y melancolía otoñal.",
+    "etiquetas": [
+      "acustico",
+      "folk",
+      "emotivo",
+      "tranquilo",
+      "letras"
+    ],
+    "texto": "Folklore — Taylor Swift Indie Folk / Pop Baladas acústicas íntimas llenas de relatos cotidianos, piano suave y melancolía otoñal. acustico folk emotivo tranquilo letras otono lluvia historias guitarra sensible emotivo economico medio solo pareja",
+    "tono": "emotivo",
+    "presupuesto": "economico",
+    "duracion": "medio",
+    "compania": "solo, pareja",
+    "icono": "music"
+  },
+  {
+    "id": 50,
+    "nombre": "Random Access Memories — Daft Punk",
+    "categoria": "musica",
+    "subcategoria": "Disco / Funk Electrónico",
+    "descripcion": "Producción orgánica impecable con guitarras funk, vocoders y atmósfera cinematográfica.",
+    "etiquetas": [
+      "funk",
+      "disco",
+      "electronica",
+      "bailar",
+      "calidad"
+    ],
+    "texto": "Random Access Memories — Daft Punk Disco / Funk Electrónico Producción orgánica impecable con guitarras funk, vocoders y atmósfera cinematográfica. funk disco electronica bailar calidad fiesta groove energia amigos elegante divertido economico medio solo pareja amigos",
+    "tono": "divertido",
+    "presupuesto": "economico",
+    "duracion": "medio",
+    "compania": "solo, pareja, amigos",
+    "icono": "music"
+  },
+  {
+    "id": 51,
+    "nombre": "Bossa Nova de Domingo (João Gilberto & Tom Jobim)",
+    "categoria": "musica",
+    "subcategoria": "Bossa Nova / Acústico",
+    "descripcion": "Guitarra suave brasileña y brisa cálida para desayunos tranquilos o tardes de sol.",
+    "etiquetas": [
+      "bossa nova",
+      "acustico",
+      "relajado",
+      "sol",
+      "cafe"
+    ],
+    "texto": "Bossa Nova de Domingo (João Gilberto & Tom Jobim) Bossa Nova / Acústico Guitarra suave brasileña y brisa cálida para desayunos tranquilos o tardes de sol. bossa nova acustico relajado sol cafe brasil calma desayuno playa pareja ligero relajado economico corto solo pareja familia",
+    "tono": "relajado",
+    "presupuesto": "economico",
+    "duracion": "corto",
+    "compania": "solo, pareja, familia",
+    "icono": "music"
+  },
+  {
+    "id": 52,
+    "nombre": "Dark Side of the Moon — Pink Floyd",
+    "categoria": "musica",
+    "subcategoria": "Rock progresivo",
+    "descripcion": "Viaje sonoro conceptual sobre el tiempo, la mente y la existencia humana.",
+    "etiquetas": [
+      "rock",
+      "clasico",
+      "reflexivo",
+      "espacio",
+      "conceptual"
+    ],
+    "texto": "Dark Side of the Moon — Pink Floyd Rock progresivo Viaje sonoro conceptual sobre el tiempo, la mente y la existencia humana. rock clasico reflexivo espacio conceptual vinilo guitarra psicodelico profundo nocturno curioso economico medio solo",
+    "tono": "curioso",
+    "presupuesto": "economico",
+    "duracion": "medio",
+    "compania": "solo",
+    "icono": "music"
+  },
+  {
+    "id": 53,
+    "nombre": "Stardew Valley",
+    "categoria": "videojuegos",
+    "subcategoria": "Simulación / Cozy",
+    "descripcion": "Hereda una granja tranquila, cultiva, explora cuevas y haz amistad con un pueblo encantador.",
+    "etiquetas": [
+      "relajado",
+      "cozy",
+      "granja",
+      "creativo",
+      "cooperativo"
+    ],
+    "texto": "Stardew Valley Simulación / Cozy Hereda una granja tranquila, cultiva, explora cuevas y haz amistad con un pueblo encantador. relajado cozy granja creativo cooperativo pixel art calma gestion sin estres amigos pareja economico relajado economico largo solo pareja amigos",
+    "tono": "relajado",
+    "presupuesto": "economico",
+    "duracion": "largo",
+    "compania": "solo, pareja, amigos",
+    "icono": "gamepad"
+  },
+  {
+    "id": 54,
+    "nombre": "The Legend of Zelda: Breath of the Wild",
+    "categoria": "videojuegos",
+    "subcategoria": "Aventura / Mundo abierto",
+    "descripcion": "Libertad total para escalar montañas, resolver santuarios y explorar un reino vasto a tu ritmo.",
+    "etiquetas": [
+      "aventura",
+      "mundo abierto",
+      "exploracion",
+      "fantasia",
+      "puzles"
+    ],
+    "texto": "The Legend of Zelda: Breath of the Wild Aventura / Mundo abierto Libertad total para escalar montañas, resolver santuarios y explorar un reino vasto a tu ritmo. aventura mundo abierto exploracion fantasia puzles naturaleza descubrimiento ingenio combate suave epico creativo moderado largo solo",
+    "tono": "creativo",
+    "presupuesto": "moderado",
+    "duracion": "largo",
+    "compania": "solo",
+    "icono": "gamepad"
+  },
+  {
+    "id": 55,
+    "nombre": "Hades",
+    "categoria": "videojuegos",
+    "subcategoria": "Acción / Roguelike",
+    "descripcion": "Combate frenético, arte increíble y diálogos brillantes mientras escapas del inframundo.",
+    "etiquetas": [
+      "accion",
+      "adrenalina",
+      "mitologia",
+      "rapido",
+      "rejugable"
+    ],
+    "texto": "Hades Acción / Roguelike Combate frenético, arte increíble y diálogos brillantes mientras escapas del inframundo. accion adrenalina mitologia rapido rejugable combate ritmo rapido energia musica dinamico adrenalina economico corto solo",
+    "tono": "adrenalina",
+    "presupuesto": "economico",
+    "duracion": "corto",
+    "compania": "solo",
+    "icono": "gamepad"
+  },
+  {
+    "id": 56,
+    "nombre": "It Takes Two",
+    "categoria": "videojuegos",
+    "subcategoria": "Cooperativo / Aventura",
+    "descripcion": "Aventura creativa pensada exclusivamente para jugar de a dos con mecánicas siempre nuevas.",
+    "etiquetas": [
+      "cooperativo",
+      "pareja",
+      "amigos",
+      "divertido",
+      "creativo"
+    ],
+    "texto": "It Takes Two Cooperativo / Aventura Aventura creativa pensada exclusivamente para jugar de a dos con mecánicas siempre nuevas. cooperativo pareja amigos divertido creativo puzles humor aventura compartir pantalla juntos divertido moderado medio pareja amigos familia",
+    "tono": "divertido",
+    "presupuesto": "moderado",
+    "duracion": "medio",
+    "compania": "pareja, amigos, familia",
+    "icono": "gamepad"
+  },
+  {
+    "id": 57,
+    "nombre": "Outer Wilds",
+    "categoria": "videojuegos",
+    "subcategoria": "Exploración / Misterio",
+    "descripcion": "Explora un sistema solar en miniatura atrapado en un bucle temporal para descifrar un enigma ancestral.",
+    "etiquetas": [
+      "misterio",
+      "espacio",
+      "ciencia ficcion",
+      "exploracion",
+      "inteligente"
+    ],
+    "texto": "Outer Wilds Exploración / Misterio Explora un sistema solar en miniatura atrapado en un bucle temporal para descifrar un enigma ancestral. misterio espacio ciencia ficcion exploracion inteligente astronomia curiosidad puzles emotivo musica sin combate curioso economico medio solo",
+    "tono": "curioso",
+    "presupuesto": "economico",
+    "duracion": "medio",
+    "compania": "solo",
+    "icono": "gamepad"
+  },
+  {
+    "id": 58,
+    "nombre": "Hollow Knight",
+    "categoria": "videojuegos",
+    "subcategoria": "Metroidvania / Atmosférico",
+    "descripcion": "Explora un reino subterráneo melancólico dibujado a mano con combates exigentes y secretos.",
+    "etiquetas": [
+      "aventura",
+      "oscuro",
+      "desafiante",
+      "arte",
+      "exploracion"
+    ],
+    "texto": "Hollow Knight Metroidvania / Atmosférico Explora un reino subterráneo melancólico dibujado a mano con combates exigentes y secretos. aventura oscuro desafiante arte exploracion plataformas precision misterio banda sonora profundo oscuro economico largo solo",
+    "tono": "oscuro",
+    "presupuesto": "economico",
+    "duracion": "largo",
+    "compania": "solo",
+    "icono": "gamepad"
+  },
+  {
+    "id": 59,
+    "nombre": "Portal 2",
+    "categoria": "videojuegos",
+    "subcategoria": "Puzles / Comedia",
+    "descripcion": "Acertijos brillantes con portales espaciales acompañados de un humor mordaz inolvidable.",
+    "etiquetas": [
+      "puzles",
+      "comedia",
+      "ciencia ficcion",
+      "cooperativo",
+      "ingenio"
+    ],
+    "texto": "Portal 2 Puzles / Comedia Acertijos brillantes con portales espaciales acompañados de un humor mordaz inolvidable. puzles comedia ciencia ficcion cooperativo ingenio logica laboratorio robot divertido pareja amigos curioso economico medio solo pareja amigos",
+    "tono": "curioso",
+    "presupuesto": "economico",
+    "duracion": "medio",
+    "compania": "solo, pareja, amigos",
+    "icono": "gamepad"
+  },
+  {
+    "id": 60,
+    "nombre": "Minecraft",
+    "categoria": "videojuegos",
+    "subcategoria": "Sandbox / Creatividad",
+    "descripcion": "Construye cualquier mundo imaginable, sobrevive o explora en solitario o con amigos.",
+    "etiquetas": [
+      "creativo",
+      "construccion",
+      "familia",
+      "amigos",
+      "infinito"
+    ],
+    "texto": "Minecraft Sandbox / Creatividad Construye cualquier mundo imaginable, sobrevive o explora en solitario o con amigos. creativo construccion familia amigos infinito bloques aventura relajado cooperativo imaginacion creativo economico largo solo amigos familia",
+    "tono": "creativo",
+    "presupuesto": "economico",
+    "duracion": "largo",
+    "compania": "solo, amigos, familia",
+    "icono": "gamepad"
+  },
+  {
+    "id": 61,
+    "nombre": "Baldur's Gate 3",
+    "categoria": "videojuegos",
+    "subcategoria": "RPG / Fantasía",
+    "descripcion": "Aventura de rol profunda donde cada decisión transforma la historia y tus compañeros.",
+    "etiquetas": [
+      "rpg",
+      "fantasia",
+      "estrategia",
+      "narrativa",
+      "cooperativo"
+    ],
+    "texto": "Baldur's Gate 3 RPG / Fantasía Aventura de rol profunda donde cada decisión transforma la historia y tus compañeros. rpg fantasia estrategia narrativa cooperativo magia decisiones combates por turnos historia larga amigos curioso moderado largo solo amigos",
+    "tono": "curioso",
+    "presupuesto": "moderado",
+    "duracion": "largo",
+    "compania": "solo, amigos",
+    "icono": "gamepad"
+  },
+  {
+    "id": 62,
+    "nombre": "Overcooked! All You Can Eat",
+    "categoria": "videojuegos",
+    "subcategoria": "Party / Cooperativo",
+    "descripcion": "Caos culinario divertidísimo en equipo preparando pedidos antes de que arda la cocina.",
+    "etiquetas": [
+      "fiesta",
+      "amigos",
+      "familia",
+      "divertido",
+      "rapido"
+    ],
+    "texto": "Overcooked! All You Can Eat Party / Cooperativo Caos culinario divertidísimo en equipo preparando pedidos antes de que arda la cocina. fiesta amigos familia divertido rapido cocina risas multijugador equipo corto energia divertido economico corto pareja amigos familia",
+    "tono": "divertido",
+    "presupuesto": "economico",
+    "duracion": "corto",
+    "compania": "pareja, amigos, familia",
+    "icono": "gamepad"
+  },
+  {
+    "id": 63,
+    "nombre": "Alan Wake 2",
+    "categoria": "videojuegos",
+    "subcategoria": "Survival Horror / Thriller",
+    "descripcion": "Thriller psicológico oscuro y cinematográfico que mezcla investigación policial y pesadillas.",
+    "etiquetas": [
+      "terror",
+      "misterio",
+      "oscuro",
+      "narrativa",
+      "sustos"
+    ],
+    "texto": "Alan Wake 2 Survival Horror / Thriller Thriller psicológico oscuro y cinematográfico que mezcla investigación policial y pesadillas. terror misterio oscuro narrativa sustos horror suspenso historia adulto miedo violencia oscuro moderado largo solo",
+    "tono": "oscuro",
+    "presupuesto": "moderado",
+    "duracion": "largo",
+    "compania": "solo",
+    "icono": "gamepad"
+  },
+  {
+    "id": 64,
+    "nombre": "Civilization VI",
+    "categoria": "videojuegos",
+    "subcategoria": "Estrategia por turnos",
+    "descripcion": "Guía una civilización desde la Edad de Piedra hasta la era espacial con táctica e historia.",
+    "etiquetas": [
+      "estrategia",
+      "historia",
+      "pensar",
+      "gestion",
+      "largo"
+    ],
+    "texto": "Civilization VI Estrategia por turnos Guía una civilización desde la Edad de Piedra hasta la era espacial con táctica e historia. estrategia historia pensar gestion largo imperio diplomacia ciencia mapas calma mental curioso economico largo solo amigos",
+    "tono": "curioso",
+    "presupuesto": "economico",
+    "duracion": "largo",
+    "compania": "solo, amigos",
+    "icono": "gamepad"
+  },
+  {
+    "id": 65,
+    "nombre": "Tacos al Pastor Caseros con Piña Asada",
+    "categoria": "comida",
+    "subcategoria": "Mexicana / Intensa",
+    "descripcion": "Carne especiada con achiote, piña caramelizada, cilantro fresco y salsa picante vibrante.",
+    "etiquetas": [
+      "picante",
+      "especias",
+      "amigos",
+      "intenso",
+      "mexicana"
+    ],
+    "texto": "Tacos al Pastor Caseros con Piña Asada Mexicana / Intensa Carne especiada con achiote, piña caramelizada, cilantro fresco y salsa picante vibrante. picante especias amigos intenso mexicana tacos tortilla limon sabor fiesta compartir cena divertido economico medio pareja amigos familia",
+    "tono": "divertido",
+    "presupuesto": "economico",
+    "duracion": "medio",
+    "compania": "pareja, amigos, familia",
+    "icono": "utensils"
+  },
+  {
+    "id": 66,
+    "nombre": "Pasta Cacio e Pepe Auténtica",
+    "categoria": "comida",
+    "subcategoria": "Italiana / Rápida",
+    "descripcion": "Crema sedosa de queso pecorino y pimienta negra recién molida lista en 15 minutos.",
+    "etiquetas": [
+      "rapido",
+      "italiana",
+      "pasta",
+      "reconfortante",
+      "economico"
+    ],
+    "texto": "Pasta Cacio e Pepe Auténtica Italiana / Rápida Crema sedosa de queso pecorino y pimienta negra recién molida lista en 15 minutos. rapido italiana pasta reconfortante economico queso cena facil casera pocos ingredientes delicioso relajado economico corto solo pareja",
+    "tono": "relajado",
+    "presupuesto": "economico",
+    "duracion": "corto",
+    "compania": "solo, pareja",
+    "icono": "utensils"
+  },
+  {
+    "id": 67,
+    "nombre": "Ramen Casero de Miso y Setas",
+    "categoria": "comida",
+    "subcategoria": "Asiática / Reconfortante",
+    "descripcion": "Caldo umami aromático con fideos, huevo marinado, setas salteadas y aceite de sésamo.",
+    "etiquetas": [
+      "asiatica",
+      "sopa",
+      "caliente",
+      "reconfortante",
+      "noche"
+    ],
+    "texto": "Ramen Casero de Miso y Setas Asiática / Reconfortante Caldo umami aromático con fideos, huevo marinado, setas salteadas y aceite de sésamo. asiatica sopa caliente reconfortante noche japon fideos caldo invierno sabroso lluvia relajado moderado medio solo pareja",
+    "tono": "relajado",
+    "presupuesto": "moderado",
+    "duracion": "medio",
+    "compania": "solo, pareja",
+    "icono": "utensils"
+  },
+  {
+    "id": 68,
+    "nombre": "Bowl Mediterráneo de Salmón, Aguacate y Quinoa",
+    "categoria": "comida",
+    "subcategoria": "Saludable / Fresca",
+    "descripcion": "Plato colorido lleno de energía limpia, limón, hierbas frescas y semillas tostadas.",
+    "etiquetas": [
+      "saludable",
+      "fresco",
+      "rapido",
+      "nutritivo",
+      "ligero"
+    ],
+    "texto": "Bowl Mediterráneo de Salmón, Aguacate y Quinoa Saludable / Fresca Plato colorido lleno de energía limpia, limón, hierbas frescas y semillas tostadas. saludable fresco rapido nutritivo ligero ensalada pescado verano fit equilibrado almuerzo relajado moderado corto solo pareja",
+    "tono": "relajado",
+    "presupuesto": "moderado",
+    "duracion": "corto",
+    "compania": "solo, pareja",
+    "icono": "utensils"
+  },
+  {
+    "id": 69,
+    "nombre": "Brownie de Chocolate Oscuro con Sal Marina",
+    "categoria": "comida",
+    "subcategoria": "Postres / Repostería",
+    "descripcion": "Centro húmedo de cacao intenso con corteza crujiente y un toque de flor de sal.",
+    "etiquetas": [
+      "dulce",
+      "postre",
+      "chocolate",
+      "horno",
+      "antojo"
+    ],
+    "texto": "Brownie de Chocolate Oscuro con Sal Marina Postres / Repostería Centro húmedo de cacao intenso con corteza crujiente y un toque de flor de sal. dulce postre chocolate horno antojo reposteria hornear casa tarde cafe pareja amigos emotivo economico medio solo pareja amigos familia",
+    "tono": "emotivo",
+    "presupuesto": "economico",
+    "duracion": "medio",
+    "compania": "solo, pareja, amigos, familia",
+    "icono": "utensils"
+  },
+  {
+    "id": 70,
+    "nombre": "Curry Verde Tailandés de Verduras y Coco",
+    "categoria": "comida",
+    "subcategoria": "Asiática / Vegetariana",
+    "descripcion": "Aromático, ligeramente picante y cremoso con leche de coco, albahaca y arroz jazmín.",
+    "etiquetas": [
+      "vegetariano",
+      "picante",
+      "asiatica",
+      "especias",
+      "arroz"
+    ],
+    "texto": "Curry Verde Tailandés de Verduras y Coco Asiática / Vegetariana Aromático, ligeramente picante y cremoso con leche de coco, albahaca y arroz jazmín. vegetariano picante asiatica especias arroz tailandia coco verduras colorido cena sabroso creativo economico medio solo pareja amigos",
+    "tono": "creativo",
+    "presupuesto": "economico",
+    "duracion": "medio",
+    "compania": "solo, pareja, amigos",
+    "icono": "utensils"
+  },
+  {
+    "id": 71,
+    "nombre": "Shakshuka (Huevos en Salsa de Tomate Especiada)",
+    "categoria": "comida",
+    "subcategoria": "Brunch / Casera",
+    "descripcion": "Sartén burbujeante de tomate, pimiento, comino y huevos escalfados para mojar pan crujiente.",
+    "etiquetas": [
+      "desayuno",
+      "rapido",
+      "vegetariano",
+      "sarten",
+      "economico"
+    ],
+    "texto": "Shakshuka (Huevos en Salsa de Tomate Especiada) Brunch / Casera Sartén burbujeante de tomate, pimiento, comino y huevos escalfados para mojar pan crujiente. desayuno rapido vegetariano sarten economico huevos brunch tomate especias facil fin de semana relajado economico corto solo pareja familia",
+    "tono": "relajado",
+    "presupuesto": "economico",
+    "duracion": "corto",
+    "compania": "solo, pareja, familia",
+    "icono": "utensils"
+  },
+  {
+    "id": 72,
+    "nombre": "Pizza Napolitana Casera en Sartén y Horno",
+    "categoria": "comida",
+    "subcategoria": "Italiana / En grupo",
+    "descripcion": "Masa aireada con salsa de tomate San Marzano, mozzarella fresca y albahaca aromática.",
+    "etiquetas": [
+      "italiana",
+      "amigos",
+      "familia",
+      "divertido",
+      "horno"
+    ],
+    "texto": "Pizza Napolitana Casera en Sartén y Horno Italiana / En grupo Masa aireada con salsa de tomate San Marzano, mozzarella fresca y albahaca aromática. italiana amigos familia divertido horno queso fin de semana cocinar juntos fiesta divertido economico medio pareja amigos familia",
+    "tono": "divertido",
+    "presupuesto": "economico",
+    "duracion": "medio",
+    "compania": "pareja, amigos, familia",
+    "icono": "utensils"
+  },
+  {
+    "id": 73,
+    "nombre": "Ceviche Clásico de Pescado Blanco y Cítricos",
+    "categoria": "comida",
+    "subcategoria": "Fresco / Marino",
+    "descripcion": "Explosión cítrica de lima, cilantro, cebolla morada y ají fresco muy refrescante.",
+    "etiquetas": [
+      "fresco",
+      "marino",
+      "verano",
+      "picante",
+      "saludable"
+    ],
+    "texto": "Ceviche Clásico de Pescado Blanco y Cítricos Fresco / Marino Explosión cítrica de lima, cilantro, cebolla morada y ají fresco muy refrescante. fresco marino verano picante saludable limon pescado ligero entrada elegante amigos adrenalina moderado corto pareja amigos",
+    "tono": "adrenalina",
+    "presupuesto": "moderado",
+    "duracion": "corto",
+    "compania": "pareja, amigos",
+    "icono": "utensils"
+  },
+  {
+    "id": 74,
+    "nombre": "Affogato de Café Espresso y Helado de Vainilla",
+    "categoria": "comida",
+    "subcategoria": "Postre / Café",
+    "descripcion": "El contraste perfecto entre espresso caliente recién hecho y helado artesanal frío.",
+    "etiquetas": [
+      "dulce",
+      "cafe",
+      "rapido",
+      "italiana",
+      "postre"
+    ],
+    "texto": "Affogato de Café Espresso y Helado de Vainilla Postre / Café El contraste perfecto entre espresso caliente recién hecho y helado artesanal frío. dulce cafe rapido italiana postre helado espresso elegante cinco minutos pareja relajado economico corto solo pareja",
+    "tono": "relajado",
+    "presupuesto": "economico",
+    "duracion": "corto",
+    "compania": "solo, pareja",
+    "icono": "utensils"
+  },
+  {
+    "id": 75,
+    "nombre": "Risotto Cremoso de Hongos Porcini",
+    "categoria": "comida",
+    "subcategoria": "Italiana / Gourmet",
+    "descripcion": "Arroz arborio cocinado lentamente con caldo caliente, vino blanco y setas aromáticas.",
+    "etiquetas": [
+      "gourmet",
+      "italiana",
+      "vegetariano",
+      "pareja",
+      "cocinar"
+    ],
+    "texto": "Risotto Cremoso de Hongos Porcini Italiana / Gourmet Arroz arborio cocinado lentamente con caldo caliente, vino blanco y setas aromáticas. gourmet italiana vegetariano pareja cocinar cena especial setas queso vino paciente emotivo moderado medio pareja amigos",
+    "tono": "emotivo",
+    "presupuesto": "moderado",
+    "duracion": "medio",
+    "compania": "pareja, amigos",
+    "icono": "utensils"
+  },
+  {
+    "id": 76,
+    "nombre": "Pollo Koreano Crujiente Dulce y Picante",
+    "categoria": "comida",
+    "subcategoria": "Asiática / Crujiente",
+    "descripcion": "Bocados doblemente crujientes glaseados en salsa gochujang, miel, ajo y sésamo.",
+    "etiquetas": [
+      "picante",
+      "asiatica",
+      "crujiente",
+      "amigos",
+      "intenso"
+    ],
+    "texto": "Pollo Koreano Crujiente Dulce y Picante Asiática / Crujiente Bocados doblemente crujientes glaseados en salsa gochujang, miel, ajo y sésamo. picante asiatica crujiente amigos intenso corea cena pelicula noche sabor potente adrenalina economico medio solo amigos",
+    "tono": "adrenalina",
+    "presupuesto": "economico",
+    "duracion": "medio",
+    "compania": "solo, amigos",
+    "icono": "utensils"
+  },
+  {
+    "id": 77,
+    "nombre": "Kioto, Japón — Templos, Bosques de Bambú y Té Matcha",
+    "categoria": "viajes",
+    "subcategoria": "Cultura y Tradición",
+    "descripcion": "Calles tranquilas de madera, jardines zen, gastronomía refinada y santuarios milenarios.",
+    "etiquetas": [
+      "cultura",
+      "historia",
+      "gastronomia",
+      "tranquilo",
+      "fotografia"
+    ],
+    "texto": "Kioto, Japón — Templos, Bosques de Bambú y Té Matcha Cultura y Tradición Calles tranquilas de madera, jardines zen, gastronomía refinada y santuarios milenarios. cultura historia gastronomia tranquilo fotografia japon templos arte caminar inspirador especial caro curioso especial largo solo pareja",
+    "tono": "curioso",
+    "presupuesto": "especial",
+    "duracion": "largo",
+    "compania": "solo, pareja",
+    "icono": "compass"
+  },
+  {
+    "id": 78,
+    "nombre": "Oaxaca, México — Mercados, Mezcal y Arquitectura Viva",
+    "categoria": "viajes",
+    "subcategoria": "Escapada Gastronómica",
+    "descripcion": "Explosión de sabores tradicionales, artesanías textiles, plazas coloridas y sitios arqueológicos.",
+    "etiquetas": [
+      "comida",
+      "cultura",
+      "colorido",
+      "historia",
+      "artesania"
+    ],
+    "texto": "Oaxaca, México — Mercados, Mezcal y Arquitectura Viva Escapada Gastronómica Explosión de sabores tradicionales, artesanías textiles, plazas coloridas y sitios arqueológicos. comida cultura colorido historia artesania mercados cocina chocolate cafe amigos calido creativo moderado medio solo pareja amigos",
+    "tono": "creativo",
+    "presupuesto": "moderado",
+    "duracion": "medio",
+    "compania": "solo, pareja, amigos",
+    "icono": "compass"
+  },
+  {
+    "id": 79,
+    "nombre": "Cabaña en la Montaña y Senderismo de Fin de Semana",
+    "categoria": "viajes",
+    "subcategoria": "Naturaleza / Desconexión",
+    "descripcion": "Aire puro de bosque, fogata nocturna, caminatas entre pinos y cero notificaciones.",
+    "etiquetas": [
+      "naturaleza",
+      "montana",
+      "relajado",
+      "desconexion",
+      "economico"
+    ],
+    "texto": "Cabaña en la Montaña y Senderismo de Fin de Semana Naturaleza / Desconexión Aire puro de bosque, fogata nocturna, caminatas entre pinos y cero notificaciones. naturaleza montana relajado desconexion economico bosque calma lectura pareja amigos aire libre relajado economico corto solo pareja amigos familia",
+    "tono": "relajado",
+    "presupuesto": "economico",
+    "duracion": "corto",
+    "compania": "solo, pareja, amigos, familia",
+    "icono": "compass"
+  },
+  {
+    "id": 80,
+    "nombre": "Lisboa, Portugal — Tranvías, Miradores y Pastéis de Nata",
+    "categoria": "viajes",
+    "subcategoria": "Ciudad con Encanto",
+    "descripcion": "Colinas soleadas frente al Atlántico, fado nocturno, cafés históricos y ritmo relajado.",
+    "etiquetas": [
+      "ciudad",
+      "historia",
+      "comida",
+      "romantico",
+      "fotografia"
+    ],
+    "texto": "Lisboa, Portugal — Tranvías, Miradores y Pastéis de Nata Ciudad con Encanto Colinas soleadas frente al Atlántico, fado nocturno, cafés históricos y ritmo relajado. ciudad historia comida romantico fotografia europa mar caminar arquitectura cafe pareja emotivo moderado medio solo pareja amigos",
+    "tono": "emotivo",
+    "presupuesto": "moderado",
+    "duracion": "medio",
+    "compania": "solo, pareja, amigos",
+    "icono": "compass"
+  },
+  {
+    "id": 81,
+    "nombre": "Costa Caribeña / Playa Escondida de Aguas Turquesas",
+    "categoria": "viajes",
+    "subcategoria": "Playa y Descanso",
+    "descripcion": "Hamacas bajo palmeras, snorkel en arrecifes y atardeceres dorados sin prisas.",
+    "etiquetas": [
+      "playa",
+      "sol",
+      "relajado",
+      "mar",
+      "verano"
+    ],
+    "texto": "Costa Caribeña / Playa Escondida de Aguas Turquesas Playa y Descanso Hamacas bajo palmeras, snorkel en arrecifes y atardeceres dorados sin prisas. playa sol relajado mar verano nadar descanso pareja amigos calor vacaciones relajado moderado medio pareja amigos familia",
+    "tono": "relajado",
+    "presupuesto": "moderado",
+    "duracion": "medio",
+    "compania": "pareja, amigos, familia",
+    "icono": "compass"
+  },
+  {
+    "id": 82,
+    "nombre": "Ruta en Caravana por la Patagonia o los Fiordos",
+    "categoria": "viajes",
+    "subcategoria": "Aventura Épica",
+    "descripcion": "Glaciares imponentes, lagos turquesa y libertad absoluta recorriendo paisajes salvajes.",
+    "etiquetas": [
+      "aventura",
+      "naturaleza",
+      "montana",
+      "fotografia",
+      "epico"
+    ],
+    "texto": "Ruta en Caravana por la Patagonia o los Fiordos Aventura Épica Glaciares imponentes, lagos turquesa y libertad absoluta recorriendo paisajes salvajes. aventura naturaleza montana fotografia epico senderismo carretera aire libre adrenalina paisaje largo adrenalina especial largo solo pareja amigos",
+    "tono": "adrenalina",
+    "presupuesto": "especial",
+    "duracion": "largo",
+    "compania": "solo, pareja, amigos",
+    "icono": "compass"
+  },
+  {
+    "id": 83,
+    "nombre": "Madrid — Museos, Tapas y Vida Nocturna",
+    "categoria": "viajes",
+    "subcategoria": "Ciudad Cultural",
+    "descripcion": "Del Prado y el Retiro a terrazas animadas de tapas, librerías y teatros.",
+    "etiquetas": [
+      "ciudad",
+      "arte",
+      "comida",
+      "amigos",
+      "divertido"
+    ],
+    "texto": "Madrid — Museos, Tapas y Vida Nocturna Ciudad Cultural Del Prado y el Retiro a terrazas animadas de tapas, librerías y teatros. ciudad arte comida amigos divertido museos historia caminar gastronomia fiesta cultura divertido moderado medio solo pareja amigos",
+    "tono": "divertido",
+    "presupuesto": "moderado",
+    "duracion": "medio",
+    "compania": "solo, pareja, amigos",
+    "icono": "compass"
+  },
+  {
+    "id": 84,
+    "nombre": "Eje Cafetero, Colombia — Fincas de Café y Palma de Cera",
+    "categoria": "viajes",
+    "subcategoria": "Naturaleza y Café",
+    "descripcion": "Montañas verdes, degustación de café de altura, pueblos coloridos y valles brumosos.",
+    "etiquetas": [
+      "cafe",
+      "naturaleza",
+      "economico",
+      "tranquilo",
+      "cultura"
+    ],
+    "texto": "Eje Cafetero, Colombia — Fincas de Café y Palma de Cera Naturaleza y Café Montañas verdes, degustación de café de altura, pueblos coloridos y valles brumosos. cafe naturaleza economico tranquilo cultura montana senderismo finca gastronomia calido familia relajado economico medio solo pareja familia",
+    "tono": "relajado",
+    "presupuesto": "economico",
+    "duracion": "medio",
+    "compania": "solo, pareja, familia",
+    "icono": "compass"
+  },
+  {
+    "id": 85,
+    "nombre": "Islandia — Auroras Boreales, Géiseres y Aguas Termales",
+    "categoria": "viajes",
+    "subcategoria": "Naturaleza Extrema",
+    "descripcion": "Paisajes volcánicos de otro planeta, cascadas gigantes y baños geotermales bajo las estrellas.",
+    "etiquetas": [
+      "aventura",
+      "fotografia",
+      "naturaleza",
+      "espacial",
+      "unico"
+    ],
+    "texto": "Islandia — Auroras Boreales, Géiseres y Aguas Termales Naturaleza Extrema Paisajes volcánicos de otro planeta, cascadas gigantes y baños geotermales bajo las estrellas. aventura fotografia naturaleza espacial unico auroras frio termas carretera caro especial curioso especial largo solo pareja amigos",
+    "tono": "curioso",
+    "presupuesto": "especial",
+    "duracion": "largo",
+    "compania": "solo, pareja, amigos",
+    "icono": "compass"
+  },
+  {
+    "id": 86,
+    "nombre": "Escapada Urbana a Cafeterías, Librerías y Cine Independiente",
+    "categoria": "viajes",
+    "subcategoria": "Plan Local / Micro-viaje",
+    "descripcion": "Redescubre tu propia ciudad en un día sin coche: café de especialidad, libro nuevo y película.",
+    "etiquetas": [
+      "economico",
+      "corto",
+      "cafe",
+      "cultura",
+      "relajado"
+    ],
+    "texto": "Escapada Urbana a Cafeterías, Librerías y Cine Independiente Plan Local / Micro-viaje Redescubre tu propia ciudad en un día sin coche: café de especialidad, libro nuevo y película. economico corto cafe cultura relajado ciudad fin de semana barato solo pareja inspirador relajado economico corto solo pareja",
+    "tono": "relajado",
+    "presupuesto": "economico",
+    "duracion": "corto",
+    "compania": "solo, pareja",
+    "icono": "compass"
+  },
+  {
+    "id": 87,
+    "nombre": "Kit de Café de Especialidad (V60 + Molinillo Manual)",
+    "categoria": "hobbies_regalos",
+    "subcategoria": "Gastronomía / Regalo",
+    "descripcion": "Convierte cada mañana en un ritual aromático descubriendo notas de origen único.",
+    "etiquetas": [
+      "cafe",
+      "ritual",
+      "regalo",
+      "relajado",
+      "casa"
+    ],
+    "texto": "Kit de Café de Especialidad (V60 + Molinillo Manual) Gastronomía / Regalo Convierte cada mañana en un ritual aromático descubriendo notas de origen único. cafe ritual regalo relajado casa cocina manana aroma preciso artesanal disfrutar relajado moderado corto solo pareja",
+    "tono": "relajado",
+    "presupuesto": "moderado",
+    "duracion": "corto",
+    "compania": "solo, pareja",
+    "icono": "gift"
+  },
+  {
+    "id": 88,
+    "nombre": "Juego de Mesa: Catan o Azul",
+    "categoria": "hobbies_regalos",
+    "subcategoria": "Juegos / Plan con Amigos",
+    "descripcion": "Estrategia accesible, comercio o diseño de mosaicos ideal para noches divertidas en mesa.",
+    "etiquetas": [
+      "juegos de mesa",
+      "estrategia",
+      "amigos",
+      "familia",
+      "divertido"
+    ],
+    "texto": "Juego de Mesa: Catan o Azul Juegos / Plan con Amigos Estrategia accesible, comercio o diseño de mosaicos ideal para noches divertidas en mesa. juegos de mesa estrategia amigos familia divertido regalo noche casa risas pensar sin pantallas divertido economico medio pareja amigos familia",
+    "tono": "divertido",
+    "presupuesto": "economico",
+    "duracion": "medio",
+    "compania": "pareja, amigos, familia",
+    "icono": "gift"
+  },
+  {
+    "id": 89,
+    "nombre": "Taller de Cerámica Artesanal en Torno",
+    "categoria": "hobbies_regalos",
+    "subcategoria": "Arte / Experiencia",
+    "descripcion": "Desconecta las manos del teclado moldeando tazas y cuencos únicos con arcilla.",
+    "etiquetas": [
+      "arte",
+      "creativo",
+      "manos",
+      "relajado",
+      "experiencia"
+    ],
+    "texto": "Taller de Cerámica Artesanal en Torno Arte / Experiencia Desconecta las manos del teclado moldeando tazas y cuencos únicos con arcilla. arte creativo manos relajado experiencia taller regalo pareja calma mindfulness crear creativo moderado corto solo pareja amigos",
+    "tono": "creativo",
+    "presupuesto": "moderado",
+    "duracion": "corto",
+    "compania": "solo, pareja, amigos",
+    "icono": "gift"
+  },
+  {
+    "id": 90,
+    "nombre": "Cámara Analógica Compacta de 35mm + Carrete",
+    "categoria": "hobbies_regalos",
+    "subcategoria": "Fotografía / Regalo",
+    "descripcion": "Vuelve a fotografiar momentos con intención, grano orgánico y la emoción de revelar.",
+    "etiquetas": [
+      "fotografia",
+      "arte",
+      "nostalgico",
+      "viajes",
+      "regalo"
+    ],
+    "texto": "Cámara Analógica Compacta de 35mm + Carrete Fotografía / Regalo Vuelve a fotografiar momentos con intención, grano orgánico y la emoción de revelar. fotografia arte nostalgico viajes regalo retro creativo recuerdos paseos mirada creativo moderado medio solo pareja",
+    "tono": "creativo",
+    "presupuesto": "moderado",
+    "duracion": "medio",
+    "compania": "solo, pareja",
+    "icono": "gift"
+  },
+  {
+    "id": 91,
+    "nombre": "Telescopio Portátil o Prismáticos Astronómicos",
+    "categoria": "hobbies_regalos",
+    "subcategoria": "Ciencia / Aire Libre",
+    "descripcion": "Observa cráteres lunares, los anillos de Saturno y cúmulos estelares en noches despejadas.",
+    "etiquetas": [
+      "astronomia",
+      "ciencia",
+      "universo",
+      "naturaleza",
+      "regalo"
+    ],
+    "texto": "Telescopio Portátil o Prismáticos Astronómicos Ciencia / Aire Libre Observa cráteres lunares, los anillos de Saturno y cúmulos estelares en noches despejadas. astronomia ciencia universo naturaleza regalo estrellas cielo noche curiosidad familia aprender curioso moderado medio solo pareja familia",
+    "tono": "curioso",
+    "presupuesto": "moderado",
+    "duracion": "medio",
+    "compania": "solo, pareja, familia",
+    "icono": "gift"
+  },
+  {
+    "id": 92,
+    "nombre": "Curso Práctico de Cocina o Repostería en Vivo",
+    "categoria": "hobbies_regalos",
+    "subcategoria": "Experiencia Culinaria",
+    "descripcion": "Aprende técnicas reales de pasta fresca, ramen o pan de masa madre y disfruta lo cocinado.",
+    "etiquetas": [
+      "comida",
+      "cocina",
+      "aprender",
+      "experiencia",
+      "pareja"
+    ],
+    "texto": "Curso Práctico de Cocina o Repostería en Vivo Experiencia Culinaria Aprende técnicas reales de pasta fresca, ramen o pan de masa madre y disfruta lo cocinado. comida cocina aprender experiencia pareja regalo divertido cena sabor amigos divertido moderado corto solo pareja amigos",
+    "tono": "divertido",
+    "presupuesto": "moderado",
+    "duracion": "corto",
+    "compania": "solo, pareja, amigos",
+    "icono": "gift"
+  },
+  {
+    "id": 93,
+    "nombre": "Diario de Dibujo Urbano + Acuarelas de Bolsillo",
+    "categoria": "hobbies_regalos",
+    "subcategoria": "Arte / Portátil",
+    "descripcion": "Captura cafés, parques y viajes en pequeñas láminas de color sin necesidad de ser experto.",
+    "etiquetas": [
+      "arte",
+      "pintura",
+      "viajes",
+      "economico",
+      "relajado"
+    ],
+    "texto": "Diario de Dibujo Urbano + Acuarelas de Bolsillo Arte / Portátil Captura cafés, parques y viajes en pequeñas láminas de color sin necesidad de ser experto. arte pintura viajes economico relajado cuaderno creatividad calma parque regalo relajado economico corto solo",
+    "tono": "relajado",
+    "presupuesto": "economico",
+    "duracion": "corto",
+    "compania": "solo",
+    "icono": "gift"
+  },
+  {
+    "id": 94,
+    "nombre": "Raspberry Pi o Kit de Domótica y Electrónica DIY",
+    "categoria": "hobbies_regalos",
+    "subcategoria": "Tecnología / Maker",
+    "descripcion": "Construye retro-consolas, estaciones meteorológicas o automatizaciones inteligentes en casa.",
+    "etiquetas": [
+      "tecnologia",
+      "programacion",
+      "ingenio",
+      "proyecto",
+      "regalo"
+    ],
+    "texto": "Raspberry Pi o Kit de Domótica y Electrónica DIY Tecnología / Maker Construye retro-consolas, estaciones meteorológicas o automatizaciones inteligentes en casa. tecnologia programacion ingenio proyecto regalo electronica aprender ordenador hogar curioso curioso moderado largo solo amigos",
+    "tono": "curioso",
+    "presupuesto": "moderado",
+    "duracion": "largo",
+    "compania": "solo, amigos",
+    "icono": "gift"
+  },
+  {
+    "id": 95,
+    "nombre": "Noche de Observación de Estrellas con Manta y Termo",
+    "categoria": "hobbies_regalos",
+    "subcategoria": "Plan Económico / Aire Libre",
+    "descripcion": "Escápate a un mirador oscuro con mapa estelar en el móvil y algo caliente para beber.",
+    "etiquetas": [
+      "economico",
+      "romantico",
+      "naturaleza",
+      "nocturno",
+      "relajado"
+    ],
+    "texto": "Noche de Observación de Estrellas con Manta y Termo Plan Económico / Aire Libre Escápate a un mirador oscuro con mapa estelar en el móvil y algo caliente para beber. economico romantico naturaleza nocturno relajado pareja estrellas cielo calma gratis plan emotivo economico corto solo pareja amigos",
+    "tono": "emotivo",
+    "presupuesto": "economico",
+    "duracion": "corto",
+    "compania": "solo, pareja, amigos",
+    "icono": "gift"
+  },
+  {
+    "id": 96,
+    "nombre": "Auriculares de Estudio con Cancelación de Ruido",
+    "categoria": "hobbies_regalos",
+    "subcategoria": "Música / Regalo Tech",
+    "descripcion": "Sumérgete en discos completos, pódcasts o trabajo profundo sin distracciones externas.",
+    "etiquetas": [
+      "musica",
+      "tecnologia",
+      "trabajo",
+      "viajes",
+      "regalo"
+    ],
+    "texto": "Auriculares de Estudio con Cancelación de Ruido Música / Regalo Tech Sumérgete en discos completos, pódcasts o trabajo profundo sin distracciones externas. musica tecnologia trabajo viajes regalo sonido concentracion vuelos calidad caro relajado especial largo solo",
+    "tono": "relajado",
+    "presupuesto": "especial",
+    "duracion": "largo",
+    "compania": "solo",
+    "icono": "gift"
+  },
+  {
+    "id": 97,
+    "nombre": "Escalada Indoor (Búlder) para Principiantes",
+    "categoria": "hobbies_regalos",
+    "subcategoria": "Deporte / Adrenalina",
+    "descripcion": "Puzles físicos en la pared que combinan fuerza, equilibrio y comunidad amigable.",
+    "etiquetas": [
+      "deporte",
+      "adrenalina",
+      "retos",
+      "amigos",
+      "energia"
+    ],
+    "texto": "Escalada Indoor (Búlder) para Principiantes Deporte / Adrenalina Puzles físicos en la pared que combinan fuerza, equilibrio y comunidad amigable. deporte adrenalina retos amigos energia movimiento salud diversion puzle fisico plan adrenalina economico corto solo pareja amigos",
+    "tono": "adrenalina",
+    "presupuesto": "economico",
+    "duracion": "corto",
+    "compania": "solo, pareja, amigos",
+    "icono": "gift"
+  },
+  {
+    "id": 98,
+    "nombre": "Terrario de Plantas Autosustentable en Frasco de Cristal",
+    "categoria": "hobbies_regalos",
+    "subcategoria": "Naturaleza / Decoración",
+    "descripcion": "Crea un mini bosque húmedo con musgo y helechos que decora tu escritorio casi sin cuidados.",
+    "etiquetas": [
+      "naturaleza",
+      "plantas",
+      "creativo",
+      "economico",
+      "regalo"
+    ],
+    "texto": "Terrario de Plantas Autosustentable en Frasco de Cristal Naturaleza / Decoración Crea un mini bosque húmedo con musgo y helechos que decora tu escritorio casi sin cuidados. naturaleza plantas creativo economico regalo hogar verde calma artesanal decoracion relajado economico corto solo pareja familia",
+    "tono": "relajado",
+    "presupuesto": "economico",
+    "duracion": "corto",
+    "compania": "solo, pareja, familia",
+    "icono": "gift"
+  }
+];
+
+const REFERENCIAS_POPULARES = {
+  todo: [
+    { id: "interestelar", label: "Interestelar (Cine / Ciencia ficción)", tokens: "interestelar ciencia ficcion espacio nolan universo" },
+    { id: "sapiens", label: "Sapiens (Lectura / Historia y sociedad)", tokens: "sapiens historia ensayo sociedad harari evolucion" },
+    { id: "daft_punk", label: "Daft Punk (Música / Electrónica y funk)", tokens: "daft punk electronica funk sintetizadores groove" },
+    { id: "zelda", label: "Zelda: Breath of the Wild (Juego / Exploración)", tokens: "zelda aventura mundo abierto exploracion naturaleza" },
+    { id: "severance", label: "Severance (Serie / Thriller psicológico)", tokens: "severance thriller misterio tecnologia psicologia" },
+    { id: "cafe_especialidad", label: "Café de especialidad y métodos manuales", tokens: "cafe especialidad ritual artesanal gastronomia origen" },
+    { id: "viaje_japon", label: "Kioto y templos tradicionales (Viajes)", tokens: "japon kioto templos cultura zen tranquilidad" },
+    { id: "knives_out", label: "Knives Out (Cine / Misterio detectivesco)", tokens: "knives out misterio detective giros ingenio comedia" },
+  ],
+  peliculas: [
+    { id: "interestelar", label: "Interestelar (Christopher Nolan)", tokens: "interestelar ciencia ficcion espacio tiempo nolan fisica" },
+    { id: "knives_out", label: "Entre navajas y secretos (Knives Out)", tokens: "knives out misterio detective giros ingenio reparto" },
+    { id: "parasitos", label: "Parásitos (Bong Joon-ho)", tokens: "parasitos drama thriller tension critica social giros" },
+    { id: "mad_max", label: "Mad Max: Furia en el camino", tokens: "mad max accion adrenalina ritmo rapido visual persecucion" },
+    { id: "chihiro", label: "El viaje de Chihiro (Studio Ghibli)", tokens: "chihiro animacion ghibli fantasia espiritual arte" },
+    { id: "la_la_land", label: "La La Land (Damien Chazelle)", tokens: "la la land musical romance jazz arte melancolia" },
+    { id: "duna", label: "Duna: Parte Dos (Denis Villeneuve)", tokens: "duna epica ciencia ficcion desierto visual inmersivo" },
+    { id: "blade_runner", label: "Blade Runner 2049", tokens: "blade runner cyberpunk noir visual reflexivo atmosfera" },
+    { id: "about_time", label: "Cuestión de tiempo (About Time)", tokens: "about time romance calidez vida cotidiana emotivo" },
+    { id: "gran_hotel", label: "El Gran Hotel Budapest (Wes Anderson)", tokens: "gran hotel budapest wes anderson comedia estetica ingenio" },
+  ],
+  series: [
+    { id: "dark", label: "Dark (Misterio y tiempo)", tokens: "dark misterio tiempo paradoja intriga alemania" },
+    { id: "severance", label: "Severance (Thriller de oficina)", tokens: "severance thriller misterio tecnologia psicologia" },
+    { id: "the_bear", label: "The Bear (Drama gastronómico)", tokens: "the bear cocina restaurante drama ritmo intenso" },
+    { id: "ted_lasso", label: "Ted Lasso (Comedia humana)", tokens: "ted lasso comedia calidez optimismo equipo amistad" },
+    { id: "arcane", label: "Arcane (Animación y fantasía)", tokens: "arcane animacion estetica accion fantasia drama" },
+    { id: "succession", label: "Succession (Poder y diálogos)", tokens: "succession drama negocios satira poder dialogos" },
+    { id: "black_mirror", label: "Black Mirror (Distopía tecnológica)", tokens: "black mirror tecnologia distopia reflexion giros" },
+  ],
+  libros: [
+    { id: "hail_mary", label: "Proyecto Hail Mary (Andy Weir)", tokens: "proyecto hail mary ciencia ficcion espacio ingenio optimismo" },
+    { id: "sapiens", label: "Sapiens (Yuval Noah Harari)", tokens: "sapiens historia sociedad evolucion ensayo cultura" },
+    { id: "sombra_viento", label: "La sombra del viento (Carlos Ruiz Zafón)", tokens: "sombra del viento misterio barcelona novela literatura" },
+    { id: "habitos_atomicos", label: "Hábitos Atómicos (James Clear)", tokens: "habitos atomicos productividad mejora desarrollo personal" },
+    { id: "tres_cuerpos", label: "El problema de los tres cuerpos (Cixin Liu)", tokens: "tres cuerpos ciencia ficcion cosmos fisica tecnologia" },
+    { id: "cien_anos", label: "Cien años de soledad (García Márquez)", tokens: "cien anos soledad realismo magico clasico literatura memoria" },
+    { id: "cosmos", label: "Cosmos (Carl Sagan)", tokens: "cosmos carl sagan astronomia ciencia universo divulgacion" },
+  ],
+  musica: [
+    { id: "lofi_jazz", label: "Lo-Fi y Jazz instrumental nocturno", tokens: "lofi jazz instrumental concentracion calma noche piano" },
+    { id: "daft_punk", label: "Daft Punk (Discovery / RAM)", tokens: "daft punk electronica funk disco sintetizadores ritmo" },
+    { id: "miles_davis", label: "Miles Davis (Kind of Blue)", tokens: "miles davis jazz clasico trompeta noche sofisticado" },
+    { id: "tame_impala", label: "Tame Impala (Currents)", tokens: "tame impala indie psicodelico melodias sintetizador moderno" },
+    { id: "bandas_sonoras", label: "Bandas sonoras orquestales (Hans Zimmer)", tokens: "hans zimmer orquestal cine sinfonico epico cuerdas" },
+    { id: "bossa_nova", label: "Bossa Nova clásica brasileña", tokens: "bossa nova guitarra acustica calma brasil suave" },
+    { id: "pink_floyd", label: "Rock progresivo (Pink Floyd)", tokens: "pink floyd rock progresivo conceptual vinilo guitarra" },
+  ],
+  videojuegos: [
+    { id: "zelda_botw", label: "Zelda: Breath of the Wild", tokens: "zelda mundo abierto exploracion aventura libertad puzles" },
+    { id: "outer_wilds", label: "Outer Wilds (Exploración espacial)", tokens: "outer wilds exploracion espacio misterio bucle arqueologia" },
+    { id: "stardew_valley", label: "Stardew Valley (Gestión y calma)", tokens: "stardew valley gestion granja calma cozy comunidad" },
+    { id: "hades", label: "Hades (Acción mitológica)", tokens: "hades accion roguelike mitologia combate dinamico" },
+    { id: "baldurs_gate", label: "Baldur's Gate 3 (Rol y decisiones)", tokens: "baldurs gate rol narrativa decisiones estrategia fantasia" },
+    { id: "portal_2", label: "Portal 2 (Puzles e ingenio)", tokens: "portal puzles logica comedia laboratorio fisica" },
+  ],
+  comida: [
+    { id: "pasta_fresca", label: "Pasta fresca y salsas clásicas italianas", tokens: "pasta italiana queso pimienta casera cacio e pepe" },
+    { id: "ramen_casero", label: "Ramen japonés y caldos aromáticos", tokens: "ramen asiatica caldo fideos umami confort caliente" },
+    { id: "tacos_especias", label: "Tacos al pastor y sabores mexicanos", tokens: "tacos mexicana especias picante cilantro limon masa" },
+    { id: "mediterraneo", label: "Platos mediterráneos de pescado y huerta", tokens: "mediterraneo pescado saludable fresco aceite oliva hierbas" },
+    { id: "reposteria", label: "Repostería de cacao amargo y masa horneada", tokens: "chocolate postre reposteria horno masa sal cafe" },
+  ],
+  viajes: [
+    { id: "kioto", label: "Kioto y rutas culturales de templos", tokens: "kioto japon templos arquitectura tradicion jardines" },
+    { id: "montana_bosque", label: "Cabaña de montaña y senderismo alpino", tokens: "montana senderismo bosque calma naturaleza desconexion" },
+    { id: "lisboa_costa", label: "Lisboa y miradores frente al mar", tokens: "lisboa ciudad europa arquitectura miradores gastronomia mar" },
+    { id: "patagonia", label: "Ruta de naturaleza salvaje y glaciares", tokens: "patagonia naturaleza glaciares aventura paisaje horizonte" },
+    { id: "oaxaca", label: "Oaxaca y tradiciones gastronómicas", tokens: "oaxaca mexico gastronomia mercados cultura artesanias" },
+  ],
+  hobbies_regalos: [
+    { id: "cafe_v60", label: "Preparación de café en filtro manual (V60)", tokens: "cafe especialidad filtro v60 molienda ritual aroma" },
+    { id: "juegos_estrategia", label: "Juegos de mesa tácticos de tablero", tokens: "juegos mesa estrategia cartas gestion amigos tablero" },
+    { id: "ceramica", label: "Modelado de cerámica en torno", tokens: "ceramica torno artesania barro manual creatividad calma" },
+    { id: "fotografia_35mm", label: "Fotografía química de película (35mm)", tokens: "fotografia analogica 35mm pelicula quimica optica enfoque" },
+    { id: "astronomia_aficionada", label: "Observación de constelaciones y telescopio", tokens: "astronomia telescopio estrellas cielo nocturno observacion" },
+  ],
+};
+
+const ATRIBUTOS_CALIDAD = [
+  {
+    id: "giros_misterio",
+    label: "Tramas con giros e ingenio",
+    desc: "Enigmas bien armados que desafíen la atención.",
+    tokens: "misterio giros enigma ingenio detective inteligencia",
+  },
+  {
+    id: "estetica_visual",
+    label: "Atmósfera y cuidado estético",
+    desc: "Identidad visual, composición o sonido de alto nivel.",
+    tokens: "visual estetica fotografia arte atmosfera sonido produccion",
+  },
+  {
+    id: "tono_reflexivo",
+    label: "Profundidad reflexiva o humana",
+    desc: "Obras con fondo temático, dilemas o sensibilidad.",
+    tokens: "reflexivo existencial humano profundidad dilema filosofico",
+  },
+  {
+    id: "ritmo_dinamico",
+    label: "Ritmo ágil y constante",
+    desc: "Desarrollo fluido que mantiene el interés de principio a fin.",
+    tokens: "ritmo rapido dinamico energia tension adrenalina agil",
+  },
+  {
+    id: "calma_sensorial",
+    label: "Calma y desconexión pausada",
+    desc: "Propuestas sin estridencias, acogedoras o meditativas.",
+    tokens: "relajado calma acogedor pausa suave contemplativo silencio",
+  },
+  {
+    id: "humor_inteligente",
+    label: "Humor fino y ligereza",
+    desc: "Tono agradable, diálogos afilados o espíritu optimista.",
+    tokens: "comedia humor inteligente ligero optimismo diversion ingeniosa",
+  },
+  {
+    id: "mundo_propio",
+    label: "Construcción de mundo original",
+    desc: "Universos singulares, fantasía coherente o visión de futuro.",
+    tokens: "mundo abierto universo fantasia futuro original arquitectura",
+  },
+  {
+    id: "tecnica_artesanal",
+    label: "Detalle técnico o artesanal",
+    desc: "Pasión por el oficio, el método o los hechos reales.",
+    tokens: "tecnica artesanal metodo disciplina cocina ciencia hechos reales",
+  },
+];
+
+const FORMATO_DURACION = [
+  { id: "indiferente", label: "Cualquier extensión", desc: "Sin restricción de duración" },
+  { id: "corto", label: "Sesión breve", desc: "Menos de 45 minutos (ágil y directo)" },
+  { id: "medio", label: "Sesión estándar", desc: "Entre 1 y 2 horas (formato habitual)" },
+  { id: "largo", label: "Inmersión prolongada", desc: "Obras extensas o de largo recorrido" },
+];
+
+const FORMATO_COMPANIA = [
+  { id: "indiferente", label: "Indiferente" },
+  { id: "solo", label: "Individual (en solitario)" },
+  { id: "pareja", label: "Para dos personas (pareja)" },
+  { id: "amigos", label: "En grupo o amigos" },
+  { id: "familia", label: "En entorno familiar" },
+];
+
+const FORMATO_PRESUPUESTO = [
+  { id: "indiferente", label: "Cualquier presupuesto" },
+  { id: "economico", label: "Accesible o sin coste adicional" },
+  { id: "moderado", label: "Gasto moderado habitual" },
+  { id: "especial", label: "Propuesta singular / sin límite" },
+];
+
+const CRITERIOS_EXCLUSION = [
+  {
+    id: "sin_terror",
+    label: "Sin terror, sobresaltos ni gore",
+    tokens: "terror sustos horror pesadilla sangre miedo maldicion",
+  },
+  {
+    id: "sin_depresion",
+    label: "Sin relatos trágicos o depresivos",
+    tokens: "triste tragedia depresion desolacion luto perdida",
+  },
+  {
+    id: "sin_lentitud",
+    label: "Evitar ritmos excesivamente lentos",
+    tokens: "lento contemplativo pausado denso parsimonioso",
+  },
+  {
+    id: "sin_violencia",
+    label: "Sin violencia explícita ni combate crudo",
+    tokens: "violencia armas combate sangre asesinato guerra",
+  },
+  {
+    id: "sin_cliches",
+    label: "Evitar fórmulas comerciales predecibles",
+    tokens: "cliche comercial formula predecible generico",
+  },
+  {
+    id: "sin_coste_alto",
+    label: "Evitar opciones costosas o de lujo",
+    tokens: "caro lujo exclusivo gasto elevado",
+  },
+];
+
+const EJEMPLOS_TEXTO_LIBRE = [
+  "Me gustan las historias de ciencia ficción con rigor técnico pero centradas en las personas.",
+  "Prefiero música instrumental con texturas de jazz y piano para leer por las noches.",
+  "Busco recetas caseras con ingredientes frescos que no lleven más de media hora.",
+  "Disfruto de narrativas con giros inesperados y atmósfera de misterio.",
+  "Me interesan los juegos y planes de estrategia compartida donde haya que pensar.",
+];
+
+
+const DOMINIOS_META = {
+  todo: { id: "todo", nombre: "Todas las categorías", icono: "all", total: ITEMS_CATALOGO.length },
+  peliculas: { id: "peliculas", nombre: "Cine y Películas", icono: "film", total: ITEMS_CATALOGO.filter(i => i.categoria === "peliculas").length },
+  series: { id: "series", nombre: "Series de Televisión", icono: "tv", total: ITEMS_CATALOGO.filter(i => i.categoria === "series").length },
+  libros: { id: "libros", nombre: "Literatura y Libros", icono: "book", total: ITEMS_CATALOGO.filter(i => i.categoria === "libros").length },
+  musica: { id: "musica", nombre: "Música y Álbumes", icono: "music", total: ITEMS_CATALOGO.filter(i => i.categoria === "musica").length },
+  videojuegos: { id: "videojuegos", nombre: "Videojuegos", icono: "gamepad", total: ITEMS_CATALOGO.filter(i => i.categoria === "videojuegos").length },
+  comida: { id: "comida", nombre: "Gastronomía y Cocina", icono: "utensils", total: ITEMS_CATALOGO.filter(i => i.categoria === "comida").length },
+  viajes: { id: "viajes", nombre: "Viajes y Rutas", icono: "compass", total: ITEMS_CATALOGO.filter(i => i.categoria === "viajes").length },
+  hobbies_regalos: { id: "hobbies_regalos", nombre: "Actividades y Aficiones", icono: "gift", total: ITEMS_CATALOGO.filter(i => i.categoria === "hobbies_regalos").length },
+};
+
+const STOPWORDS_ES = new Set([
+  "a", "al", "algo", "algunas", "algunos", "ante", "como", "con", "contra",
+  "cual", "cuando", "de", "del", "desde", "donde", "dos", "el", "ella",
+  "ellas", "ellos", "en", "entre", "era", "es", "esa", "esas", "ese",
+  "eso", "esos", "esta", "estaba", "estado", "estan", "estar", "estas",
+  "este", "esto", "estos", "fue", "fueron", "ha", "hace", "hacer", "hacia",
+  "hasta", "hay", "la", "las", "le", "les", "lo", "los", "mas", "me", "mi",
+  "mis", "mucha", "muchas", "mucho", "muchos", "muy", "nada", "ni", "no",
+  "nos", "nosotros", "o", "os", "otra", "otras", "otro", "otros", "para",
+  "pero", "poco", "por", "porque", "que", "quien", "quienes", "se", "sea",
+  "ser", "si", "sin", "sobre", "sois", "solamente", "solo", "somos", "son",
+  "soy", "su", "sus", "tambien", "te", "tengo", "ti", "tiene", "tienen",
+  "todo", "todos", "tu", "tus", "un", "una", "unas", "uno", "unos", "usted",
+  "va", "vamos", "van", "ya", "yo"
+]);
+
+function normalizarTexto(txt) {
+  if (!txt) return [];
+  const sinTildes = String(txt).normalize("NFKD").replace(/[̀-ͯ]/g, "").toLowerCase();
+  const tokens = sinTildes.match(/[a-z0-9_]+/g) || [];
+  return tokens.filter(t => t.length > 1 && !STOPWORDS_ES.has(t));
+}
+
+// ============================================================================
+// MOTOR DE IA LOCAL (TF-IDF + COSINE SIMILARITY + K-MEANS CLUSTERING)
+// ============================================================================
+class MotorRecomendacionLocal {
+  constructor(items) {
+    this.items = items;
+    this.vocab = new Map();
+    this.terms = [];
+    this.df = new Map();
+    this.N = items.length;
+    this.idf = [];
+    this.itemVectors = [];
+    this.clusters = [];
+    this._construirIndice();
+    this._calcularClusters();
+  }
+
+  _construirIndice() {
+    const docsTokens = this.items.map(it => {
+      const fullText = `${it.nombre} ${it.texto} ${it.categoria} ${it.subcategoria} ${(it.etiquetas || []).join(" ")} ${it.tono} ${it.descripcion}`;
+      const tokens = normalizarTexto(fullText);
+      const unique = new Set(tokens);
+      for (const t of unique) {
+        this.df.set(t, (this.df.get(t) || 0) + 1);
+      }
+      return tokens;
+    });
+
+    let idx = 0;
+    for (const [t, count] of this.df.entries()) {
+      this.vocab.set(t, idx);
+      this.terms.push(t);
+      this.idf[idx] = Math.log((this.N + 1) / (count + 1)) + 1;
+      idx++;
+    }
+
+    const V = this.terms.length;
+
+    this.itemVectors = docsTokens.map(tokens => {
+      const vec = new Float64Array(V);
+      const tfMap = new Map();
+      for (const t of tokens) {
+        tfMap.set(t, (tfMap.get(t) || 0) + 1);
+      }
+      let sumSq = 0;
+      for (const [t, freq] of tfMap.entries()) {
+        const tidx = this.vocab.get(t);
+        if (tidx !== undefined) {
+          const tf = 1 + Math.log(freq);
+          const weight = tf * this.idf[tidx];
+          vec[tidx] = weight;
+          sumSq += weight * weight;
+        }
+      }
+      const norm = Math.sqrt(sumSq) || 1;
+      for (let i = 0; i < V; i++) {
+        vec[i] /= norm;
+      }
+      return vec;
+    });
+  }
+
+  vectorizar(tokens) {
+    const V = this.terms.length;
+    const vec = new Float64Array(V);
+    const tfMap = new Map();
+    for (const t of tokens) {
+      tfMap.set(t, (tfMap.get(t) || 0) + 1);
+    }
+    let sumSq = 0;
+    for (const [t, freq] of tfMap.entries()) {
+      const tidx = this.vocab.get(t);
+      if (tidx !== undefined) {
+        const tf = 1 + Math.log(freq);
+        const weight = tf * this.idf[tidx];
+        vec[tidx] = weight;
+        sumSq += weight * weight;
+      }
+    }
+    const norm = Math.sqrt(sumSq) || 1;
+    for (let i = 0; i < V; i++) {
+      vec[i] /= norm;
+    }
+    return vec;
+  }
+
+  similitud(v1, v2) {
+    let dot = 0;
+    for (let i = 0; i < v1.length; i++) {
+      dot += v1[i] * v2[i];
+    }
+    return dot;
+  }
+
+  _calcularClusters() {
+    const catMap = new Map();
+    this.items.forEach((it, idx) => {
+      if (!catMap.has(it.categoria)) catMap.set(it.categoria, []);
+      catMap.get(it.categoria).push(idx);
+    });
+
+    const clustersList = [];
+    const V = this.terms.length;
+    let cId = 0;
+
+    for (const [cat, indices] of catMap.entries()) {
+      const centroid = new Float64Array(V);
+      indices.forEach(idx => {
+        const vec = this.itemVectors[idx];
+        for (let i = 0; i < V; i++) centroid[i] += vec[i];
+      });
+      for (let i = 0; i < V; i++) centroid[i] /= indices.length;
+
+      const termWeights = [];
+      for (let i = 0; i < V; i++) {
+        if (centroid[i] > 0) termWeights.push({ term: this.terms[i], weight: centroid[i] });
+      }
+      termWeights.sort((a, b) => b.weight - a.weight);
+      const topKeywords = termWeights.slice(0, 3).map(tw => tw.term);
+
+      clustersList.push({
+        id: cId++,
+        categoria: cat,
+        nombre: DOMINIOS_META[cat]?.nombre || cat,
+        palabras_clave: topKeywords,
+        indices: indices,
+      });
+    }
+    this.clusters = clustersList;
+  }
+
+  buscar(query, categoria = "todo", limit = 32) {
+    let candidatos = this.items.map((it, idx) => ({ it, idx }));
+    if (categoria !== "todo") {
+      candidatos = candidatos.filter(c => c.it.categoria === categoria);
+    }
+    if (!query || !query.trim()) {
+      return candidatos.slice(0, limit).map(c => c.it);
+    }
+    const qTokens = normalizarTexto(query);
+    const qVec = this.vectorizar(qTokens);
+
+    const scored = candidatos.map(c => ({
+      item: c.it,
+      sim: this.similitud(qVec, this.itemVectors[c.idx]),
+    }));
+    scored.sort((a, b) => b.sim - a.sim);
+    return scored.slice(0, limit).map(s => ({ ...s.item, score: s.sim }));
+  }
+
+  similares(itemId, n = 4) {
+    const idx = this.items.findIndex(it => String(it.id) === String(itemId));
+    if (idx === -1) return [];
+    const baseVec = this.itemVectors[idx];
+    const scored = [];
+    for (let i = 0; i < this.items.length; i++) {
+      if (i === idx) continue;
+      const sim = this.similitud(baseVec, this.itemVectors[i]);
+      scored.push({ item: this.items[i], sim });
+    }
+    scored.sort((a, b) => b.sim - a.sim);
+    return scored.slice(0, n).map(s => s.item);
+  }
+
+  recomendarPorCuestionario(params) {
+    const {
+      categoria = "todo",
+      referencias = [],
+      atributos = [],
+      duracion = "indiferente",
+      compania = "indiferente",
+      presupuesto = "indiferente",
+      evitar = [],
+      texto_libre = "",
+      cantidad = 6,
+    } = params;
+
+    const consultaTokens = [
+      ...normalizarTexto(referencias.join(" ")),
+      ...normalizarTexto(atributos.join(" ")),
+      ...normalizarTexto(texto_libre),
+    ];
+
+    const qVec = this.vectorizar(consultaTokens);
+    const evitarTokens = new Set(normalizarTexto(evitar.join(" ")));
+
+    let candidatos = this.items.map((it, idx) => ({ it, idx }));
+    if (categoria !== "todo") {
+      candidatos = candidatos.filter(c => c.it.categoria === categoria);
+    }
+
+    const scored = [];
+    for (const c of candidatos) {
+      const it = c.it;
+      const itemTokens = new Set(normalizarTexto(`${it.nombre} ${it.texto} ${it.categoria} ${(it.etiquetas || []).join(" ")} ${it.tono}`));
+      
+      let descartado = false;
+      for (const ev of evitarTokens) {
+        if (itemTokens.has(ev)) {
+          descartado = true;
+          break;
+        }
+      }
+      if (descartado) continue;
+
+      let sim = this.similitud(qVec, this.itemVectors[c.idx]);
+      let bonus = 0;
+      if (duracion !== "indiferente" && it.duracion === duracion) bonus += 0.08;
+      if (compania !== "indiferente" && it.compania === compania) bonus += 0.08;
+      if (presupuesto !== "indiferente" && it.presupuesto === presupuesto) bonus += 0.08;
+
+      const scoreTotal = sim + bonus;
+
+      const razones = [];
+      if (it.duracion === duracion && duracion !== "indiferente") {
+        razones.push(`Formato adaptado a tu tiempo disponible (${duracion})`);
+      }
+      if (it.compania === compania && compania !== "indiferente") {
+        razones.push(`Ideal para disfrutar en plan ${compania}`);
+      }
+      if (atributos.length) {
+        razones.push(`Alineado con las cualidades seleccionadas`);
+      }
+      if (razones.length === 0) {
+        razones.push(`Afinidad con tus gustos culturales y referentes`);
+      }
+
+      scored.push({ ...it, scoreTotal, razones });
+    }
+
+    scored.sort((a, b) => b.scoreTotal - a.scoreTotal);
+
+    let seleccionados = [];
+    if (categoria === "todo") {
+      const porCat = new Map();
+      for (const s of scored) {
+        if (!porCat.has(s.categoria)) porCat.set(s.categoria, []);
+        porCat.get(s.categoria).push(s);
+      }
+      const cats = Array.from(porCat.keys());
+      let idxCat = 0;
+      while (seleccionados.length < cantidad && porCat.size > 0) {
+        const c = cats[idxCat % cats.length];
+        const list = porCat.get(c);
+        if (list && list.length > 0) {
+          seleccionados.push(list.shift());
+        } else {
+          porCat.delete(c);
+        }
+        idxCat++;
+      }
+    } else {
+      seleccionados = scored.slice(0, cantidad);
+    }
+
+    const maxScore = seleccionados[0]?.scoreTotal || 1;
+    return seleccionados.map((item, idx) => {
+      const ratio = item.scoreTotal / (maxScore || 1);
+      const afinidad = Math.min(99, Math.max(76, Math.round(98 - idx * 3 + (ratio - 0.5) * 4)));
+      return { ...item, afinidad };
+    });
+  }
+}
+
+const motorLocal = new MotorRecomendacionLocal(ITEMS_CATALOGO);
+
+// ============================================================================
+// ICONOS SVG
+// ============================================================================
+const ICON_PATHS = {
+  all: "M4 6h16M4 12h16M4 18h16",
+  film: "M4 5h16a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1zm3 0v14M17 5v14M3 9h4m10 0h4M3 15h4m10 0h4",
+  tv: "M3 7h18v12H3V7zm5-4l4 4 4-4",
+  book: "M4 5.5A2.5 2.5 0 0 1 6.5 3H20v17H6.5A2.5 2.5 0 0 0 4 22V5.5zM4 18.5A2.5 2.5 0 0 1 6.5 16H20",
+  music: "M9 18V5l11-2v13M9 18a2.5 2.5 0 1 1-5 0 2.5 2.5 0 0 1 5 0zm11-2a2.5 2.5 0 1 1-5 0 2.5 2.5 0 0 1 5 0z",
+  gamepad: "M6 11h4m-2-2v4m7-1h.01M18 10h.01M5 7h14a3 3 0 0 1 3 3l-1 6a2.5 2.5 0 0 1-4.3 1.4L14.5 15h-5l-2.2 2.4A2.5 2.5 0 0 1 3 16l-1-6a3 3 0 0 1 3-3z",
+  utensils: "M4 3v7a3 3 0 0 0 3 3v8M7 3v6M10 3v7a3 3 0 0 1-3 3M17 3v18m0-18c2 2 2 6 0 8",
+  compass: "M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20zm3.5-13.5l-2 5-5 2 2-5 5-2z",
+  gift: "M20 12v9H4v-9m18-4H2v4h20V8zM12 8v13m0-13c-1.5-3-5-3-5-1s3.5 1 5 1zm0 0c1.5-3 5-3 5-1s-3.5 1-5 1z",
+};
+
+const STEP_METAS = [
+  { step: 1, label: "Paso 1 de 6", title: "¿Qué te apetece explorar hoy?" },
+  { step: 2, label: "Paso 2 de 6", title: "Elige tus obras o referentes de cabecera" },
+  { step: 3, label: "Paso 3 de 6", title: "¿Qué cualidades o sensaciones buscas?" },
+  { step: 4, label: "Paso 4 de 6", title: "¿En qué plan estás y cuánto tiempo tienes?" },
+  { step: 5, label: "Paso 5 de 6", title: "¿Qué prefieres descartar expresamente?" },
+  { step: 6, label: "Paso 6 de 6", title: "Detalles finales y tu nombre de perfil" },
+];
+
+function cargarRatingsStorage() {
+  try {
+    const raw = localStorage.getItem("criterio_ratings");
+    return raw ? new Map(JSON.parse(raw)) : new Map();
+  } catch {
+    return new Map();
+  }
+}
+
+function guardarRatingsStorage(map) {
+  try {
+    localStorage.setItem("criterio_ratings", JSON.stringify(Array.from(map.entries())));
+  } catch {
+    /* ignore */
+  }
+}
+
+const state = {
+  activeView: "wizard",
+  activeUser: localStorage.getItem("criterio_username") || "Lector_Curioso",
+  ratingsMap: cargarRatingsStorage(),
+  allCatalogItems: ITEMS_CATALOGO,
+  selectedClusterId: null,
+  wizard: {
+    step: 1,
+    maxReached: 1,
+    categoria: "todo",
+    referencias: [],
+    referencia_libre: "",
+    atributos: [],
+    duracion: "indiferente",
+    compania: "indiferente",
+    presupuesto: "indiferente",
+    evitar: [],
+    texto_libre: "",
+    usuario: localStorage.getItem("criterio_username") || "Lector_Curioso",
+    guardar_perfil: true,
+    cantidad: 6,
+    resultados: [],
+    explicacion: "",
+  },
+  explore: {
+    categoria: "todo",
+    clusterId: null,
+    q: "",
+  },
+};
+
+function el(tag, attrs = {}, children = []) {
+  const node = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs)) {
+    if (k === "className") node.className = v;
+    else if (k === "textContent") node.textContent = v;
+    else if (k === "dataset") Object.assign(node.dataset, v);
+    else if (k.startsWith("on") && typeof v === "function") node.addEventListener(k.slice(2).toLowerCase(), v);
+    else if (v !== undefined && v !== null && v !== false) node.setAttribute(k, v === true ? "" : String(v));
+  }
+  const list = Array.isArray(children) ? children : [children];
+  for (const child of list) {
+    if (child === null || child === undefined || child === false) continue;
+    node.appendChild(typeof child === "string" ? document.createTextNode(child) : child);
+  }
+  return node;
+}
+
+function createIcon(name) {
+  const svgNS = "http://www.w3.org/2000/svg";
+  const svg = document.createElementNS(svgNS, "svg");
+  svg.setAttribute("viewBox", "0 0 24 24");
+  svg.setAttribute("fill", "none");
+  svg.setAttribute("stroke", "currentColor");
+  svg.setAttribute("stroke-width", "1.8");
+  svg.setAttribute("stroke-linecap", "round");
+  svg.setAttribute("stroke-linejoin", "round");
+  const path = document.createElementNS(svgNS, "path");
+  path.setAttribute("d", ICON_PATHS[name] || ICON_PATHS.all);
+  svg.appendChild(path);
+  return svg;
+}
+
+function showToast(msg) {
+  const dock = document.getElementById("toast-dock");
+  if (!dock) return;
+  const toast = el("div", { className: "toast", textContent: msg });
+  dock.appendChild(toast);
+  setTimeout(() => toast.remove(), 3000);
+}
+
+function domainName(catId) {
+  if (catId === "todo") return "Todas las categorías";
+  const found = DOMINIOS_META[catId];
+  return found ? found.nombre : catId;
+}
+
+function switchView(viewName) {
+  state.activeView = viewName;
+  document.querySelectorAll(".nav-link").forEach((btn) => {
+    btn.classList.toggle("is-active", btn.dataset.view === viewName);
+  });
+  document.querySelectorAll(".view").forEach((sec) => {
+    sec.hidden = sec.id !== `view-${viewName}`;
+  });
+
+  if (viewName === "explorar") {
+    cargarCatalogoExplorador();
+  } else if (viewName === "perfil") {
+    cargarVistaPerfil();
+  }
+}
+
+// ============================================================================
+// STEPPER & CUESTIONARIO
+// ============================================================================
+function updateStepperUI() {
+  const dotsContainer = document.getElementById("step-dots");
+  const labelEl = document.getElementById("step-label");
+  const progressFill = document.getElementById("stepper-progress");
+  if (!dotsContainer) return;
+
+  dotsContainer.innerHTML = "";
+  STEP_METAS.forEach((meta) => {
+    const isActive = meta.step === state.wizard.step;
+    const isDone = meta.step < state.wizard.step;
+    const isClickable = meta.step <= state.wizard.maxReached;
+
+    const dot = el("button", {
+      type: "button",
+      className: `step-dot ${isActive ? "is-active" : ""} ${isDone ? "is-completed" : ""}`,
+      textContent: String(meta.step),
+      disabled: !isClickable,
+      onClick: () => {
+        if (isClickable) {
+          state.wizard.step = meta.step;
+          renderStage();
+        }
+      },
+    });
+    dotsContainer.appendChild(dot);
+  });
+
+  if (labelEl) labelEl.textContent = STEP_METAS[state.wizard.step - 1].label;
+  if (progressFill) {
+    const pct = ((state.wizard.step - 1) / 5) * 100;
+    progressFill.style.width = `${Math.max(16.66, pct)}%`;
+  }
+
+  const prevBtn = document.getElementById("btn-prev");
+  const nextBtn = document.getElementById("btn-next");
+  if (prevBtn) prevBtn.disabled = state.wizard.step === 1;
+  if (nextBtn) {
+    nextBtn.textContent = state.wizard.step === 6 ? "Obtener recomendaciones" : "Siguiente";
+  }
+}
+
+function renderStage() {
+  updateStepperUI();
+  const stage = document.getElementById("wizard-stage");
+  if (!stage) return;
+  stage.innerHTML = "";
+
+  const meta = STEP_METAS[state.wizard.step - 1];
+  stage.appendChild(el("h2", { className: "stage-title", textContent: meta.title }));
+
+  switch (state.wizard.step) {
+    case 1: renderStep1(stage); break;
+    case 2: renderStep2(stage); break;
+    case 3: renderStep3(stage); break;
+    case 4: renderStep4(stage); break;
+    case 5: renderStep5(stage); break;
+    case 6: renderStep6(stage); break;
+  }
+}
+
+function renderStep1(container) {
+  const grid = el("div", { className: "category-grid" });
+
+  const allOption = el(
+    "button",
+    {
+      type: "button",
+      className: `category-card ${state.wizard.categoria === "todo" ? "is-selected" : ""}`,
+      onClick: () => {
+        state.wizard.categoria = "todo";
+        renderStep1(container);
+      },
+    },
+    [
+      el("div", { className: "category-card-icon" }, [createIcon("all")]),
+      el("div", { className: "category-card-info" }, [
+        el("strong", { textContent: "Todas las categorías" }),
+        el("span", { textContent: "Recomiéndame de todo un poco" }),
+      ]),
+    ]
+  );
+  grid.appendChild(allOption);
+
+  Object.values(DOMINIOS_META).forEach((dom) => {
+    if (dom.id === "todo") return;
+    const isSelected = state.wizard.categoria === dom.id;
+    const card = el(
+      "button",
+      {
+        type: "button",
+        className: `category-card ${isSelected ? "is-selected" : ""}`,
+        onClick: () => {
+          state.wizard.categoria = dom.id;
+          renderStep1(container);
+        },
+      },
+      [
+        el("div", { className: "category-card-icon" }, [createIcon(dom.icono)]),
+        el("div", { className: "category-card-info" }, [
+          el("strong", { textContent: dom.nombre }),
+          el("span", { textContent: `${dom.total} obras disponibles` }),
+        ]),
+      ]
+    );
+    grid.appendChild(card);
+  });
+
+  container.innerHTML = "";
+  container.appendChild(el("h2", { className: "stage-title", textContent: STEP_METAS[0].title }));
+  container.appendChild(grid);
+}
+
+function renderStep2(container) {
+  const cat = state.wizard.categoria;
+  const list = REFERENCIAS_POPULARES[cat] || REFERENCIAS_POPULARES.todo || [];
+
+  const grid = el("div", { className: "references-grid" });
+  list.forEach((ref) => {
+    const isSelected = state.wizard.referencias.includes(ref.tokens);
+    const card = el(
+      "button",
+      {
+        type: "button",
+        className: `reference-card ${isSelected ? "is-selected" : ""}`,
+        onClick: (e) => {
+          const btn = e.currentTarget;
+          if (state.wizard.referencias.includes(ref.tokens)) {
+            state.wizard.referencias = state.wizard.referencias.filter((t) => t !== ref.tokens);
+            btn.classList.remove("is-selected");
+          } else {
+            state.wizard.referencias.push(ref.tokens);
+            btn.classList.add("is-selected");
+          }
+        },
+      },
+      [el("strong", { textContent: ref.label })]
+    );
+    grid.appendChild(card);
+  });
+
+  const customBox = el("div", { className: "custom-input-box" }, [
+    el("label", { textContent: "O escribe otro referente o creador que te guste:" }),
+    el("input", {
+      type: "text",
+      className: "input-text",
+      placeholder: "Ej: Blade Runner, Studio Ghibli, Murakami, pasta cacio e pepe...",
+      value: state.wizard.referencia_libre,
+      onInput: (e) => {
+        state.wizard.referencia_libre = e.target.value;
+      },
+    }),
+  ]);
+
+  container.appendChild(grid);
+  container.appendChild(customBox);
+}
+
+function renderStep3(container) {
+  const grid = el("div", { className: "attributes-grid" });
+  ATRIBUTOS_CALIDAD.forEach((attr) => {
+    const isSelected = state.wizard.atributos.includes(attr.tokens);
+    const card = el(
+      "button",
+      {
+        type: "button",
+        className: `attribute-card ${isSelected ? "is-selected" : ""}`,
+        onClick: (e) => {
+          const btn = e.currentTarget;
+          if (state.wizard.atributos.includes(attr.tokens)) {
+            state.wizard.atributos = state.wizard.atributos.filter((t) => t !== attr.tokens);
+            btn.classList.remove("is-selected");
+          } else {
+            state.wizard.atributos.push(attr.tokens);
+            btn.classList.add("is-selected");
+          }
+        },
+      },
+      [
+        el("h4", { textContent: attr.label }),
+        el("p", { textContent: attr.desc }),
+      ]
+    );
+    grid.appendChild(card);
+  });
+  container.appendChild(grid);
+}
+
+function renderStep4(container) {
+  const stack = el("div", { className: "format-stack" });
+
+  function makeGroup(title, options, currentVal, onChange) {
+    const group = el("div", { className: "format-group" }, [
+      el("label", { textContent: title }),
+      el("div", { className: "chips-row" }, options.map((opt) => {
+        const isSel = currentVal === opt.id;
+        return el("button", {
+          type: "button",
+          className: `choice-chip ${isSel ? "is-selected" : ""}`,
+          textContent: opt.label,
+          onClick: (e) => {
+            const row = e.currentTarget.parentElement;
+            row.querySelectorAll(".choice-chip").forEach((c) => c.classList.remove("is-selected"));
+            e.currentTarget.classList.add("is-selected");
+            onChange(opt.id);
+          },
+        });
+      })),
+    ]);
+    return group;
+  }
+
+  stack.appendChild(makeGroup("Duración / Extensión", FORMATO_DURACION, state.wizard.duracion, (v) => { state.wizard.duracion = v; }));
+  stack.appendChild(makeGroup("Compañía", FORMATO_COMPANIA, state.wizard.compania, (v) => { state.wizard.compania = v; }));
+  stack.appendChild(makeGroup("Presupuesto / Acceso", FORMATO_PRESUPUESTO, state.wizard.presupuesto, (v) => { state.wizard.presupuesto = v; }));
+
+  container.appendChild(stack);
+}
+
+function renderStep5(container) {
+  const grid = el("div", { className: "exclusions-grid" });
+  CRITERIOS_EXCLUSION.forEach((exc) => {
+    const isSelected = state.wizard.evitar.includes(exc.tokens);
+    const card = el(
+      "button",
+      {
+        type: "button",
+        className: `exclusion-card ${isSelected ? "is-selected" : ""}`,
+        onClick: (e) => {
+          const btn = e.currentTarget;
+          if (state.wizard.evitar.includes(exc.tokens)) {
+            state.wizard.evitar = state.wizard.evitar.filter((t) => t !== exc.tokens);
+            btn.classList.remove("is-selected");
+          } else {
+            state.wizard.evitar.push(exc.tokens);
+            btn.classList.add("is-selected");
+          }
+        },
+      },
+      [
+        el("div", { className: "exclusion-indicator" }),
+        el("span", { textContent: exc.label }),
+      ]
+    );
+    grid.appendChild(card);
+  });
+  container.appendChild(grid);
+}
+
+function renderStep6(container) {
+  const layout = el("div", { className: "step-final-layout" });
+
+  const textareaBox = el("div", {}, [
+    el("label", {
+      style: "display: block; font-weight: 600; font-size: 0.9rem; margin-bottom: 0.4rem; color: var(--text-secondary);",
+      textContent: "Describe libremente con tus palabras lo que buscas:",
+    }),
+    el("textarea", {
+      id: "free-text-input",
+      className: "textarea-input",
+      placeholder: "Ej: Me gustan las historias de ciencia ficción con rigor técnico pero centradas en las personas...",
+      value: state.wizard.texto_libre,
+      onInput: (e) => { state.wizard.texto_libre = e.target.value; },
+    }),
+  ]);
+
+  const suggestionsBox = el("div", { className: "prompt-suggestions" }, [
+    el("span", {
+      style: "font-size: 0.78rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em;",
+      textContent: "Ideas de búsqueda:",
+    }),
+    el("div", { style: "display: flex; flex-direction: column; gap: 0.35rem; margin-top: 0.4rem;" },
+      EJEMPLOS_TEXTO_LIBRE.map((prompt) =>
+        el("button", {
+          type: "button",
+          className: "prompt-btn",
+          textContent: prompt,
+          onClick: () => {
+            state.wizard.texto_libre = prompt;
+            const ta = document.getElementById("free-text-input");
+            if (ta) ta.value = prompt;
+          },
+        })
+      )
+    ),
+  ]);
+
+  const profileBox = el("div", { className: "profile-box" }, [
+    el("label", {
+      style: "font-weight: 600; font-size: 0.88rem; color: var(--text-secondary);",
+      textContent: "Nombre de perfil para registrar tus preferencias:",
+    }),
+    el("input", {
+      type: "text",
+      className: "input-text",
+      value: state.wizard.usuario,
+      onInput: (e) => {
+        state.wizard.usuario = e.target.value;
+        localStorage.setItem("criterio_username", e.target.value);
+      },
+    }),
+  ]);
+
+  layout.appendChild(textareaBox);
+  layout.appendChild(suggestionsBox);
+  layout.appendChild(profileBox);
+  container.appendChild(layout);
+}
+
+function handleNextStep() {
+  if (state.wizard.step < 6) {
+    state.wizard.step++;
+    state.wizard.maxReached = Math.max(state.wizard.maxReached, state.wizard.step);
+    renderStage();
+  } else {
+    ejecutarRecomendacionWizard();
+  }
+}
+
+function handlePrevStep() {
+  if (state.wizard.step > 1) {
+    state.wizard.step--;
+    renderStage();
+  }
+}
+
+// ============================================================================
+// RESULTADOS DEL CUESTIONARIO CON IA
+// ============================================================================
+async function ejecutarRecomendacionWizard() {
+  const nextBtn = document.getElementById("btn-next");
+  if (nextBtn) {
+    nextBtn.disabled = true;
+    nextBtn.textContent = "Analizando afinidad con IA...";
+  }
+
+  let referenciasList = [...state.wizard.referencias];
+  if (state.wizard.referencia_libre.trim()) {
+    referenciasList.push(state.wizard.referencia_libre.trim());
+  }
+
+  const payload = {
+    categoria: state.wizard.categoria,
+    referencias: referenciasList,
+    atributos: state.wizard.atributos,
+    duracion: state.wizard.duracion,
+    compania: state.wizard.compania,
+    presupuesto: state.wizard.presupuesto,
+    evitar: state.wizard.evitar,
+    texto_libre: state.wizard.texto_libre,
+    usuario: state.wizard.usuario || "Lector_Curioso",
+    cantidad: 6,
+  };
+
+  try {
+    const res = await fetch("/api/cuestionario/recomendar", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    if (res.ok) {
+      const data = await res.json();
+      state.wizard.resultados = data.recomendaciones || [];
+    } else {
+      throw new Error("Backend offline");
+    }
+  } catch {
+    state.wizard.resultados = motorLocal.recomendarPorCuestionario(payload);
+  }
+
+  const catNombre = domainName(state.wizard.categoria);
+  const userNom = state.wizard.usuario || "tu perfil";
+  state.wizard.explicacion = "Selección generada por IA para " + userNom + " en " + catNombre + ". Se evaluaron 98 obras considerando tus referentes, tono y exclusiones.";
+
+  if (nextBtn) {
+    nextBtn.disabled = false;
+    nextBtn.textContent = "Obtener recomendaciones";
+  }
+
+  mostrarResultadosWizard();
+}
+
+function mostrarResultadosWizard() {
+  const resultsContainer = document.getElementById("wizard-results");
+  const grid = document.getElementById("results-grid");
+  const explanationEl = document.getElementById("results-explanation");
+  const filterRow = document.getElementById("results-filter-row");
+
+  if (!resultsContainer || !grid) return;
+  resultsContainer.hidden = false;
+
+  if (explanationEl) {
+    explanationEl.textContent = state.wizard.explicacion;
+  }
+
+  if (filterRow) {
+    filterRow.innerHTML = "";
+    filterRow.appendChild(el("span", { className: "pill-tag", textContent: domainName(state.wizard.categoria) }));
+    if (state.wizard.referencias.length) {
+      filterRow.appendChild(el("span", { className: "pill-tag", textContent: `${state.wizard.referencias.length} referentes` }));
+    }
+    if (state.wizard.atributos.length) {
+      filterRow.appendChild(el("span", { className: "pill-tag", textContent: `${state.wizard.atributos.length} cualidades` }));
+    }
+  }
+
+  grid.innerHTML = "";
+  if (state.wizard.resultados.length === 0) {
+    grid.appendChild(
+      el("p", {
+        style: "color: var(--text-muted); font-size: 0.92rem;",
+        textContent: "No se encontraron obras con los criterios exactos. Prueba a relajar algún filtro.",
+      })
+    );
+    return;
+  }
+
+  state.wizard.resultados.forEach((item) => {
+    grid.appendChild(createItemCard(item));
+  });
+
+  resultsContainer.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+function createItemCard(item) {
+  const affinity = item.afinidad || Math.round((item.score || 0.85) * 100);
+  const userScore = state.ratingsMap.get(item.id) || 0;
+  const reasonText = (item.razones && item.razones[0]) || item.por_que || "Alta correspondencia con tus preferencias";
+
+  const card = el("article", { className: "item-card" }, [
+    el("div", {}, [
+      el("div", { className: "item-card-top" }, [
+        el("span", { className: "badge-pill", textContent: domainName(item.categoria) }),
+        el("span", { className: "affinity-badge", textContent: `${affinity}% afinidad` }),
+      ]),
+      el("h3", { className: "item-card-title", textContent: item.nombre }),
+      el("p", { className: "item-card-desc", textContent: item.descripcion || item.texto || "" }),
+      el("p", { className: "match-reason", textContent: `Por qué encaja: ${reasonText}` }),
+    ]),
+    el("div", { className: "item-card-bottom" }, [
+      el("div", { className: "rating-pills-row" }, [
+        ...[1, 2, 3, 4, 5].map((val) =>
+          el("button", {
+            type: "button",
+            className: `rate-btn ${userScore >= val ? "is-active" : ""}`,
+            textContent: String(val),
+            title: `Calificar ${val} de 5`,
+            onClick: (e) => {
+              e.stopPropagation();
+              registrarCalificacion(item.id, val, card);
+            },
+          })
+        ),
+      ]),
+      el(
+        "button",
+        {
+          type: "button",
+          className: "btn is-ghost",
+          style: "padding: 0.35rem 0.85rem; font-size: 0.78rem;",
+          onClick: () => abrirModal(item),
+        },
+        "Ver ficha"
+      ),
+    ]),
+  ]);
+
+  return card;
+}
+
+function registrarCalificacion(itemId, score, cardElement) {
+  state.ratingsMap.set(itemId, score);
+  guardarRatingsStorage(state.ratingsMap);
+
+  if (cardElement) {
+    const btns = cardElement.querySelectorAll(".rate-btn");
+    btns.forEach((btn, idx) => {
+      btn.classList.toggle("is-active", idx + 1 <= score);
+    });
+  }
+
+  fetch("/api/interacciones", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      usuario: state.wizard.usuario || "Lector_Curioso",
+      item_id: itemId,
+      calificacion: score,
+    }),
+  }).catch(() => {});
+
+  showToast(`Calificación ${score}/5 guardada en tu perfil`);
+}
+
+// ============================================================================
+// MODAL DE DETALLE
+// ============================================================================
+function abrirModal(item) {
+  const modal = document.getElementById("item-modal");
+  if (!modal) return;
+
+  document.getElementById("modal-category").textContent = domainName(item.categoria);
+  document.getElementById("modal-item-title").textContent = item.nombre;
+  document.getElementById("modal-desc").textContent = item.descripcion || item.texto || "";
+
+  const tagsContainer = document.getElementById("modal-tags");
+  tagsContainer.innerHTML = "";
+  (item.etiquetas || []).forEach((t) => {
+    tagsContainer.appendChild(el("span", { className: "pill-tag", textContent: t }));
+  });
+
+  const metaRow = document.getElementById("modal-meta");
+  metaRow.innerHTML = "";
+  const props = [
+    { label: "Ámbito", val: domainName(item.categoria) },
+    { label: "Extensión", val: item.duracion || "Estándar" },
+    { label: "Compañía", val: item.compania || "Indiferente" },
+  ];
+  props.forEach((p) => {
+    metaRow.appendChild(
+      el("div", { className: "meta-unit" }, [
+        el("span", { textContent: p.label }),
+        el("strong", { textContent: p.val }),
+      ])
+    );
+  });
+
+  const ratingBox = document.getElementById("modal-rating-buttons");
+  ratingBox.innerHTML = "";
+  const curScore = state.ratingsMap.get(item.id) || 0;
+  [1, 2, 3, 4, 5].forEach((val) => {
+    ratingBox.appendChild(
+      el("button", {
+        type: "button",
+        className: `rate-btn ${curScore >= val ? "is-active" : ""}`,
+        textContent: String(val),
+        onClick: () => {
+          registrarCalificacion(item.id, val);
+          abrirModal(item);
+        },
+      })
+    );
+  });
+
+  const similarsGrid = document.getElementById("modal-similars-grid");
+  similarsGrid.innerHTML = "";
+  const similaresList = motorLocal.similares(item.id, 4);
+  if (similaresList.length) {
+    similaresList.forEach((sim) => {
+      similarsGrid.appendChild(
+        el("div", {
+          className: "similar-card",
+          onClick: () => abrirModal(sim),
+        }, [
+          el("strong", { textContent: sim.nombre }),
+          el("span", { textContent: domainName(sim.categoria) }),
+        ])
+      );
+    });
+  } else {
+    similarsGrid.appendChild(el("span", { style: "font-size: 0.8rem; color: var(--text-muted);", textContent: "No hay similares directos." }));
+  }
+
+  modal.showModal();
+}
+
+function cerrarModal() {
+  const modal = document.getElementById("item-modal");
+  if (modal) modal.close();
+}
+
+// ============================================================================
+// EXPLORADOR Y CLUSTERING TEMÁTICO
+// ============================================================================
+function cargarCatalogoExplorador() {
+  renderExploreClusters();
+  renderExploreCategories();
+  ejecutarBusquedaExplorar();
+}
+
+function renderExploreClusters() {
+  const container = document.getElementById("explore-cluster-chips");
+  if (!container) return;
+  container.innerHTML = "";
+
+  const allChip = el("button", {
+    type: "button",
+    className: `cluster-chip ${state.explore.clusterId === null ? "is-active" : ""}`,
+    onClick: () => {
+      state.explore.clusterId = null;
+      renderExploreClusters();
+      ejecutarBusquedaExplorar();
+    },
+  }, [
+    el("strong", { textContent: "Todos los grupos" }),
+    el("span", { textContent: "Catálogo completo" }),
+  ]);
+  container.appendChild(allChip);
+
+  motorLocal.clusters.forEach((cluster) => {
+    const isAct = state.explore.clusterId === cluster.id;
+    const chip = el("button", {
+      type: "button",
+      className: `cluster-chip ${isAct ? "is-active" : ""}`,
+      onClick: () => {
+        state.explore.clusterId = isAct ? null : cluster.id;
+        renderExploreClusters();
+        ejecutarBusquedaExplorar();
+      },
+    }, [
+      el("strong", { textContent: cluster.nombre }),
+      el("span", { textContent: cluster.palabras_clave.join(" · ") }),
+    ]);
+    container.appendChild(chip);
+  });
+}
+
+function renderExploreCategories() {
+  const container = document.getElementById("explore-category-chips");
+  if (!container) return;
+  container.innerHTML = "";
+
+  const cats = [
+    { id: "todo", nombre: "Todas" },
+    ...Object.values(DOMINIOS_META).filter(d => d.id !== "todo"),
+  ];
+
+  cats.forEach((cat) => {
+    const isAct = state.explore.categoria === cat.id;
+    const chip = el("button", {
+      type: "button",
+      className: `category-chip ${isAct ? "is-active" : ""}`,
+      textContent: cat.nombre,
+      onClick: () => {
+        state.explore.categoria = cat.id;
+        renderExploreCategories();
+        ejecutarBusquedaExplorar();
+      },
+    });
+    container.appendChild(chip);
+  });
+}
+
+function ejecutarBusquedaExplorar() {
+  const grid = document.getElementById("explore-grid");
+  if (!grid) return;
+  grid.innerHTML = "";
+
+  let items = motorLocal.buscar(state.explore.q, state.explore.categoria, 48);
+
+  if (state.explore.clusterId !== null) {
+    const cl = motorLocal.clusters.find(c => c.id === state.explore.clusterId);
+    if (cl) {
+      items = items.filter(it => cl.indices.includes(motorLocal.items.indexOf(it)));
+    }
+  }
+
+  if (items.length === 0) {
+    grid.appendChild(
+      el("p", {
+        style: "color: var(--text-muted); font-size: 0.92rem; grid-column: 1 / -1;",
+        textContent: "No se encontraron obras coincidentes.",
+      })
+    );
+    return;
+  }
+
+  items.forEach((it) => {
+    grid.appendChild(createItemCard(it));
+  });
+}
+
+// ============================================================================
+// VISTA MI PERFIL
+// ============================================================================
+function cargarVistaPerfil() {
+  const countEl = document.getElementById("profile-ratings-count");
+  const historyGrid = document.getElementById("profile-history-grid");
+  const recsGrid = document.getElementById("profile-recs-grid");
+
+  const ratedItems = [];
+  state.ratingsMap.forEach((val, itemId) => {
+    const found = ITEMS_CATALOGO.find(i => String(i.id) === String(itemId));
+    if (found) {
+      ratedItems.push({ ...found, calificacion_usuario: val });
+    }
+  });
+
+  ratedItems.sort((a, b) => b.calificacion_usuario - a.calificacion_usuario);
+
+  if (countEl) countEl.textContent = String(ratedItems.length);
+
+  if (historyGrid) {
+    historyGrid.innerHTML = "";
+    if (ratedItems.length === 0) {
+      historyGrid.appendChild(
+        el("p", {
+          style: "color: var(--text-muted); font-size: 0.88rem;",
+          textContent: "Aún no has calificado ninguna obra. Puedes calificar de 1 a 5 estrellas en cualquier tarjeta.",
+        })
+      );
+    } else {
+      ratedItems.forEach((it) => {
+        historyGrid.appendChild(
+          el("div", { className: "history-card" }, [
+            el("div", {}, [
+              el("strong", { textContent: it.nombre }),
+              el("span", { textContent: domainName(it.categoria) }),
+            ]),
+            el("span", { className: "history-badge", textContent: `${it.calificacion_usuario}/5` }),
+          ])
+        );
+      });
+    }
+  }
+
+  if (recsGrid) {
+    recsGrid.innerHTML = "";
+    let queryTokens = [];
+    ratedItems.filter(r => r.calificacion_usuario >= 4).forEach(r => {
+      queryTokens.push(r.nombre, (r.etiquetas || []).join(" "), r.categoria);
+    });
+
+    const profileRecs = motorLocal.recomendarPorCuestionario({
+      categoria: "todo",
+      referencias: queryTokens,
+      cantidad: 4,
+    });
+
+    profileRecs.forEach((it) => {
+      recsGrid.appendChild(createItemCard(it));
+    });
+  }
+}
+
+// ============================================================================
+// ARRANQUE
+// ============================================================================
+function arrancar() {
+  renderStage();
+
+  const prevBtn = document.getElementById("btn-prev");
+  const nextBtn = document.getElementById("btn-next");
+  if (prevBtn) prevBtn.addEventListener("click", handlePrevStep);
+  if (nextBtn) nextBtn.addEventListener("click", handleNextStep);
+
+  const editBtn = document.getElementById("btn-edit-quiz");
+  const restartBtn = document.getElementById("btn-restart-quiz");
+  if (editBtn) {
+    editBtn.addEventListener("click", () => {
+      document.getElementById("wizard-results").hidden = true;
+      state.wizard.step = 1;
+      renderStage();
+    });
+  }
+  if (restartBtn) {
+    restartBtn.addEventListener("click", () => {
+      document.getElementById("wizard-results").hidden = true;
+      state.wizard.step = 1;
+      state.wizard.maxReached = 1;
+      state.wizard.referencias = [];
+      state.wizard.atributos = [];
+      state.wizard.evitar = [];
+      state.wizard.texto_libre = "";
+      renderStage();
+    });
+  }
+
+  document.querySelectorAll(".nav-link").forEach((btn) => {
+    btn.addEventListener("click", (e) => {
+      switchView(e.currentTarget.dataset.view);
+    });
+  });
+
+  const searchInput = document.getElementById("search-input");
+  const searchBtn = document.getElementById("btn-search-exec");
+  if (searchInput) {
+    searchInput.addEventListener("input", (e) => {
+      state.explore.q = e.target.value;
+      ejecutarBusquedaExplorar();
+    });
+  }
+  if (searchBtn) {
+    searchBtn.addEventListener("click", () => {
+      ejecutarBusquedaExplorar();
+    });
+  }
+
+  const refreshProfileBtn = document.getElementById("btn-refresh-profile");
+  if (refreshProfileBtn) {
+    refreshProfileBtn.addEventListener("click", () => {
+      cargarVistaPerfil();
+      showToast("Recomendaciones de perfil actualizadas");
+    });
+  }
+
+  const closeBtn = document.getElementById("btn-close-modal");
+  if (closeBtn) closeBtn.addEventListener("click", cerrarModal);
+}
+
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", arrancar);
+} else {
+  arrancar();
+}
+
+  </script>
+</body>
+</html>
